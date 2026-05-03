@@ -395,8 +395,11 @@
 
         <div class="scard">
           <div class="scard-title">Export local</div>
-          <div class="scard-desc">Télécharge une copie JSON de ta cave.</div>
-          <button class="btn btn-ghost" onclick="exportJSON()">Télécharger</button>
+          <div class="scard-desc">Télécharge une copie de ta cave.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="exportJSON()">Export JSON</button>
+            <button class="btn btn-prim" onclick="exportExcel()">Export Excel</button>
+          </div>
         </div>
 
         <div class="scard">
@@ -477,6 +480,7 @@
           <div class="fg"><label class="flbl">Cépage(s)</label><input class="finput" type="text" id="f-grapes" placeholder="ex. Pinot Noir"></div>
           <div class="fg"><label class="flbl req">Quantité</label><input class="finput" type="number" id="f-qty" value="1" min="1"></div>
           <div class="fg"><label class="flbl">Valeur (€)</label><input class="finput" type="number" id="f-value" placeholder="85" min="0" step="0.01"></div>
+          <div class="fg"><label class="flbl">Alcool (%)</label><input class="finput" type="number" id="f-abv" placeholder="13.5" min="0" max="100" step="0.1"></div>
           <div class="fg"><label class="flbl">Apogée début</label><input class="finput" type="number" id="f-ps" placeholder="2026" min="1900" max="2100"></div>
           <div class="fg"><label class="flbl">Apogée fin</label><input class="finput" type="number" id="f-pe" placeholder="2035" min="1900" max="2100"></div>
           <div class="fg frow">
@@ -791,7 +795,7 @@ function renderTable() {
       <td><span class="qty-pill">${b.quantity}</span></td>
       <td><span class="mbadge ${m.c}">${m.l}</span></td>
       <td style="font-size:11px;font-family:'Cormorant Garamond',serif">${fEur(b.value)}</td>
-      <td onclick="event.stopPropagation()"><button class="row-btn" onclick="quickConsume('${b.id}')">↩</button></td>
+      <td onclick="event.stopPropagation()"><button class="row-btn" title="Modifier" onclick="ui.currentId='${b.id}';editBottle()" style="margin-right:4px">✎</button><button class="row-btn" title="Sortir" onclick="quickConsume('${b.id}')">↩</button></td>
     </tr>`;
   }).join('');
 }
@@ -831,7 +835,7 @@ function openAdd() {
 }
 
 function clearForm() {
-  ['f-producer','f-cuvee','f-region','f-appellation','f-vintage','f-grapes','f-value','f-ps','f-pe']
+  ['f-producer','f-cuvee','f-region','f-appellation','f-vintage','f-grapes','f-value','f-abv','f-ps','f-pe']
     .forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-qty').value=1;
   ['tgl-color','tgl-format','tgl-loc'].forEach(id=>document.querySelectorAll(`#${id} .tgl`).forEach(b=>b.classList.remove('on')));
@@ -857,6 +861,7 @@ function editBottle() {
   document.getElementById('f-grapes').value      = b.grapes||'';
   document.getElementById('f-qty').value         = b.quantity||1;
   document.getElementById('f-value').value       = b.value||'';
+  document.getElementById('f-abv').value         = b.abv||'';
   document.getElementById('f-ps').value          = b.peakStart||'';
   document.getElementById('f-pe').value          = b.peakEnd||'';
   setTGL('tgl-color',b.color); setTGL('tgl-format',b.format); setTGL('tgl-loc',b.location);
@@ -877,6 +882,7 @@ function saveBottle() {
     vintage:   parseInt(gv('f-vintage'))||null,
     grapes:    gv('f-grapes'),
     value:     parseFloat(gv('f-value'))||null,
+    abv:       parseFloat(gv('f-abv'))||null,
     peakStart: parseInt(gv('f-ps'))||null,
     peakEnd:   parseInt(gv('f-pe'))||null
   };
@@ -897,6 +903,7 @@ function openDetail(id) {
       <div><div class="dlbl">Format</div><div class="dval">${FMT[b.format]||'—'}</div></div>
       <div><div class="dlbl">Appellation</div><div class="dval">${esc(b.appellation||'—')}</div></div>
       <div><div class="dlbl">Cépage(s)</div><div class="dval">${esc(b.grapes||'—')}</div></div>
+      <div><div class="dlbl">Alcool</div><div class="dval">${b.abv ? b.abv + ' %' : '—'}</div></div>
       <div><div class="dlbl">Quantité</div><div class="dval big">${b.quantity}</div></div>
       <div><div class="dlbl">Valeur</div><div class="dval big">${fEur(b.value)}</div></div>
       <div><div class="dlbl">Apogée</div><div class="dval">${b.peakStart||'?'} — ${b.peakEnd||'?'}</div></div>
@@ -1179,7 +1186,29 @@ function updateApiStatus() { /* Clé gérée côté serveur Netlify */ }
 function exportJSON() {
   const blob=new Blob([JSON.stringify(cave,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`cave-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
-  toast('Sauvegarde téléchargée');
+  toast('Sauvegarde JSON téléchargée');
+}
+
+function exportExcel() {
+  // Génère un fichier CSV compatible Excel (avec séparateur ; pour Excel français)
+  const header = ['Producteur','Cuvée','Région','Appellation','Couleur','Format','Millésime','Cépage(s)','Quantité','Valeur (€)','Alcool (%)','Apogée début','Apogée fin','Maturité','Emplacement','Date ajout'];
+  const rows = cave.bottles.map(b => [
+    b.producer||'', b.cuvee||'', b.region||'', b.appellation||'',
+    COL[b.color]||'', FMT[b.format]||'', b.vintage||'',
+    b.grapes||'', b.quantity||'', b.value||'', b.abv||'',
+    b.peakStart||'', b.peakEnd||'', mat(b).l,
+    LOC[b.location]||'', b.addedAt ? new Date(b.addedAt).toLocaleDateString('fr-FR') : ''
+  ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(';'));
+
+  const bom = '\uFEFF'; // BOM UTF-8 pour qu'Excel reconnaisse les accents
+  const csv = bom + header.join(';') + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `cave-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Export Excel téléchargé');
 }
 
 function loadDemo() {
