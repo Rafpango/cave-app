@@ -1055,10 +1055,16 @@ Mets null pour les champs non identifiables. Pour color, déduis du cépage ou d
     }
 
     const data = await resp.json();
-    // La réponse peut contenir des blocs tool_use (web_search) — on cherche le bloc text final
-    const textBlock = (data.content || []).filter(b => b.type === 'text').pop();
-    const txt  = (textBlock ? textBlock.text : '').trim().replace(/```json|```/g,'').trim();
-    const p    = JSON.parse(txt);
+    // Avec web_search, la réponse peut contenir tool_use + tool_result + text
+    // On concatène tous les blocs texte et on extrait le JSON avec une regex
+    const allText = (data.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text || '')
+      .join('\n');
+    // Extraire le premier objet JSON trouvé dans le texte
+    const jsonMatch = allText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Aucun JSON trouvé dans la réponse IA');
+    const p = JSON.parse(jsonMatch[0]);
 
     if(p.producer)    document.getElementById('f-producer').value    = p.producer;
     if(p.cuvee)       document.getElementById('f-cuvee').value        = p.cuvee;
@@ -1085,7 +1091,9 @@ Mets null pour les champs non identifiables. Pour color, déduis du cépage ou d
   } catch(e) {
     document.getElementById('p-load').style.display = 'none';
     document.getElementById('p-pick').style.display = 'block';
-    toast('Erreur : ' + e.message, true);
+    const msg = e.message.includes('JSON') ? 'Réponse IA illisible — réessaie' : 'Erreur : ' + e.message;
+    toast(msg, true);
+    console.error('[Photo IA]', e);
   }
   event.target.value = '';
 }
