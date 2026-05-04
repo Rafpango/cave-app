@@ -103,7 +103,7 @@
     .m-rdy { background: #e8f5e9; color: #2e7d32; }
     .m-soon { background: #fff8e1; color: #f57f17; }
     .m-wt  { background: #fff3e0; color: #e65100; }
-    .m-dk  { background: #fce4ec; color: #880e4f; }
+    .m-dk  { background: #fce4ec; color: #b71c1c; }  /* En retard — rouge */
     .m-na  { background: #eee; color: #888; }
     .row-btn { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 13px; color: var(--muted); transition: all .12s; border-radius: 0; }
     .row-btn:hover { border-color: var(--bordeaux); color: var(--bordeaux); }
@@ -240,7 +240,7 @@
       .rcard-info { border-right: none; border-bottom: 1px solid var(--border); }
     }
     @media (min-width: 900px) {
-      .stat-grid { grid-template-columns: repeat(4, 1fr); }
+      .stat-grid { grid-template-columns: repeat(5, 1fr); }
       .overlay { align-items: center; padding: 24px; }
       .mbox { border-radius: 0; max-height: 90vh; }
     }
@@ -307,14 +307,13 @@
           <table class="wine-table">
             <thead>
               <tr>
-                <th onclick="srt('producer')">Cuvée / Producteur</th>
+                <th onclick="srt('producer')" style="width:18%">Cuvée / Producteur</th>
                 <th onclick="srt('color')">Coul.</th>
-                <th onclick="srt('appellation')">Appellation</th>
+                <th onclick="srt('appellation')" style="width:14%">Appellation</th>
                 <th onclick="srt('vintage')">Mill.</th>
-                <th>Format</th>
-                <th onclick="srt('location')">Empl.</th>
                 <th onclick="srt('quantity')">Qté</th>
                 <th>Maturité</th>
+                <th onclick="srt('peakEnd')">Fin apogée</th>
                 <th onclick="srt('value')">Valeur</th>
                 <th></th>
               </tr>
@@ -444,7 +443,7 @@
         <div id="p-load" style="display:none">
           <div class="ai-wrap">
             <div class="ai-spin"></div>
-            <div class="ai-txt">Claude analyse l'étiquette et recherche le prix…</div>
+            <div class="ai-txt">Claude analyse l'étiquette…</div>
           </div>
         </div>
         <div id="p-done" style="display:none">
@@ -458,24 +457,7 @@
         <div class="fgrid">
           <div class="fg"><label class="flbl req">Producteur</label><input class="finput" type="text" id="f-producer" placeholder="ex. Domaine Leflaive"></div>
           <div class="fg"><label class="flbl">Cuvée</label><input class="finput" type="text" id="f-cuvee" placeholder="ex. Les Pucelles"></div>
-          <div class="fg"><label class="flbl">Région</label><select class="finput" id="f-region">
-            <option value="">— Choisir —</option>
-            <option value="Alsace">Alsace</option>
-            <option value="Argentine">Argentine</option>
-            <option value="Auvergne">Auvergne</option>
-            <option value="Beaujolais">Beaujolais</option>
-            <option value="Bordeaux">Bordeaux</option>
-            <option value="Bourgogne">Bourgogne</option>
-            <option value="Champagne">Champagne</option>
-            <option value="Espagne">Espagne</option>
-            <option value="Italie">Italie</option>
-            <option value="Languedoc">Languedoc</option>
-            <option value="Loire">Loire</option>
-            <option value="Provence">Provence</option>
-            <option value="Rhône">Rhône</option>
-            <option value="Savoie">Savoie</option>
-            <option value="Sud-Ouest">Sud-Ouest</option>
-          </select></div>
+          <div class="fg"><label class="flbl">Région</label><input class="finput" type="text" id="f-region" placeholder="ex. Bourgogne"></div>
           <div class="fg"><label class="flbl">Appellation</label><input class="finput" type="text" id="f-appellation" placeholder="ex. Puligny-Montrachet"></div>
           <div class="fg frow">
             <label class="flbl req">Couleur</label>
@@ -575,7 +557,7 @@ let auth = { token: null, gistId: null };
 let cave = { bottles: [], history: [] };
 let ui   = {
   currentId: null, editingId: null,
-  filters: { color: null, region: null, maturity: null, location: null },
+  filters: { color: null, region: null, maturity: null, location: null, format: null, peakEnd: null },
   sort: { field: 'producer', dir: 'asc' },
   online: navigator.onLine, pendingPush: false
 };
@@ -587,12 +569,12 @@ const fEur = n => n ? Math.round(n).toLocaleString('fr-FR') + ' €' : '—';
 const gv   = id => document.getElementById(id).value.trim();
 
 function mat(b) {
-  if (!b.peakStart && !b.peakEnd) return { c:'m-na', l:'—' };
+  if (!b.peakEnd) return { c:'m-na', l:'—' };
   const y = new Date().getFullYear();
-  if (b.peakStart && y < b.peakStart) return { c:'m-wt', l:'Attendre' };
-  if (b.peakEnd   && y > b.peakEnd)   return { c:'m-dk', l:'À boire !' };
-  if (b.peakEnd   && (b.peakEnd - y) < 1) return { c:'m-soon', l:'Bientôt' };
-  return { c:'m-rdy', l:'Prêt' };
+  if (b.peakEnd < y)          return { c:'m-dk',   l:'En retard' };
+  if (b.peakEnd <= y + 1)     return { c:'m-rdy',  l:'À boire !' };
+  if (b.peakEnd <= y + 4)     return { c:'m-soon', l:'Peut attendre' };
+  return                             { c:'m-wt',   l:'Attendre' };
 }
 const totBtl = () => cave.bottles.reduce((s,b) => s + (parseInt(b.quantity)||0), 0);
 const totVal = () => cave.bottles.reduce((s,b) => s + (parseFloat(b.value)||0) * (parseInt(b.quantity)||0), 0);
@@ -730,20 +712,38 @@ function renderStatGrid() {
   let avg = '—';
   const wv = cave.bottles.filter(b=>b.vintage);
   if (wv.length) { let w=0,q=0; wv.forEach(b=>{const n=parseInt(b.quantity)||1;w+=b.vintage*n;q+=n;}); avg=Math.round(w/q); }
+  // Prix moyen par bouteille (valeur pondérée par quantité)
+  const bWithVal = cave.bottles.filter(b=>b.value&&parseInt(b.quantity)>0);
+  let avgPrice = '—';
+  if (bWithVal.length) {
+    let sv=0, sq=0;
+    bWithVal.forEach(b=>{const q=parseInt(b.quantity)||1;sv+=parseFloat(b.value)*q;sq+=q;});
+    avgPrice = Math.round(sv/sq).toLocaleString('fr-FR')+' €';
+  }
   document.getElementById('stat-grid').innerHTML = `
     <div class="stat-card"><div class="stat-lbl">Total cave</div><div class="stat-val">${t}</div><div class="stat-sub">bouteilles</div></div>
     <div class="stat-card"><div class="stat-lbl">Valeur estimée</div><div class="stat-val">${Math.round(v).toLocaleString('fr-FR')}</div><div class="stat-sub">euros</div></div>
     <div class="stat-card"><div class="stat-lbl">Prêtes à boire</div><div class="stat-val">${rdy}</div><div class="stat-sub">bouteilles</div></div>
-    <div class="stat-card"><div class="stat-lbl">Millésime moyen</div><div class="stat-val">${avg}</div><div class="stat-sub">pondéré</div></div>`;
+    <div class="stat-card"><div class="stat-lbl">Millésime moyen</div><div class="stat-val">${avg}</div><div class="stat-sub">pondéré</div></div>
+    <div class="stat-card"><div class="stat-lbl">Prix moyen / btl</div><div class="stat-val" style="font-size:18px">${avgPrice}</div><div class="stat-sub">pondéré par qté</div></div>`;
 }
 
 function renderSidebar() {
-  const cc={}, lc={}, rc={}, mc={'m-rdy':0,'m-soon':0,'m-wt':0,'m-dk':0};
+  const cc={}, lc={}, rc={}, fc={}, mc={'m-rdy':0,'m-soon':0,'m-wt':0,'m-dk':0};
+  const y = new Date().getFullYear();
+  const pec = { retard:0, aboire:0, peutatten:0, attendre:0 };
   cave.bottles.forEach(b => {
     const q=parseInt(b.quantity)||0;
     cc[b.color]=(cc[b.color]||0)+q; lc[b.location]=(lc[b.location]||0)+q;
     rc[(b.region||'—')]=(rc[(b.region||'—')]||0)+q;
+    fc[b.format]=(fc[b.format]||0)+q;
     const m=mat(b).c; if(mc[m]!==undefined) mc[m]+=q;
+    if(b.peakEnd){
+      if(b.peakEnd<y)                        pec.retard+=q;
+      else if(b.peakEnd<=y+1)                pec.aboire+=q;
+      else if(b.peakEnd>=y+2&&b.peakEnd<=y+4) pec.peutatten+=q;
+      else                                   pec.attendre+=q;
+    }
   });
   const regs = Object.entries(rc).sort((a,b)=>b[1]-a[1]).slice(0,7);
   const cdot = { rouge:'var(--red)', blanc:'#c8a84c', rose:'var(--rose)' };
@@ -754,11 +754,14 @@ function renderSidebar() {
     <div class="sb-section"><div class="sb-title">Région</div><div class="sb-chips">
       ${regs.length?regs.map(([r,c])=>`<button class="chip ${ui.filters.region===r?'on':''}" onclick='setF("region",${JSON.stringify(r)})'><span>${esc(r)}</span><span style="font-size:8px;opacity:.6">${c}</span></button>`).join(''):'<span style="font-size:9px;color:var(--muted)">Aucune</span>'}
     </div></div>
-    <div class="sb-section"><div class="sb-title">Maturité</div><div class="sb-chips">
-      <button class="chip ${ui.filters.maturity==='m-rdy'?'on':''}" onclick="setF('maturity','m-rdy')">Prêt <span style="font-size:8px;opacity:.6">${mc['m-rdy']}</span></button>
-      <button class="chip ${ui.filters.maturity==='m-soon'?'on':''}" onclick="setF('maturity','m-soon')">Bientôt <span style="font-size:8px;opacity:.6">${mc['m-soon']}</span></button>
-      <button class="chip ${ui.filters.maturity==='m-wt'?'on':''}"  onclick="setF('maturity','m-wt')">Attendre <span style="font-size:8px;opacity:.6">${mc['m-wt']}</span></button>
-      <button class="chip ${ui.filters.maturity==='m-dk'?'on':''}"  onclick="setF('maturity','m-dk')">À boire ! <span style="font-size:8px;opacity:.6">${mc['m-dk']}</span></button>
+    <div class="sb-section"><div class="sb-title">Fin d'apogée</div><div class="sb-chips">
+      <button class="chip ${ui.filters.peakEnd==='retard'?'on':''}"    onclick="setF('peakEnd','retard')">En retard <span style="font-size:8px;opacity:.6">${pec.retard}</span></button>
+      <button class="chip ${ui.filters.peakEnd==='aboire'?'on':''}"    onclick="setF('peakEnd','aboire')">À boire ! <span style="font-size:8px;opacity:.6">${pec.aboire}</span></button>
+      <button class="chip ${ui.filters.peakEnd==='peutatten'?'on':''}" onclick="setF('peakEnd','peutatten')">Peut attendre <span style="font-size:8px;opacity:.6">${pec.peutatten}</span></button>
+      <button class="chip ${ui.filters.peakEnd==='attendre'?'on':''}"  onclick="setF('peakEnd','attendre')">Attendre <span style="font-size:8px;opacity:.6">${pec.attendre}</span></button>
+    </div></div>
+    <div class="sb-section"><div class="sb-title">Format</div><div class="sb-chips">
+      ${['bouteille','magnum','jeroboam'].map(f=>`<button class="chip ${ui.filters.format===f?'on':''}" onclick="setF('format','${f}')">${FMT[f]} <span style="font-size:8px;opacity:.6">${fc[f]||0}</span></button>`).join('')}
     </div></div>
     <div class="sb-section"><div class="sb-title">Emplacement</div><div class="sb-chips">
       ${['grande','petite','autre'].map(l=>`<button class="chip ${ui.filters.location===l?'on':''}" onclick="setF('location','${l}')">${LOC[l]} <span style="font-size:8px;opacity:.6">${lc[l]||0}</span></button>`).join('')}
@@ -766,15 +769,24 @@ function renderSidebar() {
 }
 
 function setF(k,v) { ui.filters[k]=ui.filters[k]===v?null:v; render(); }
-function resetFilters() { ui.filters={color:null,region:null,maturity:null,location:null}; document.getElementById('search-input').value=''; render(); }
+function resetFilters() { ui.filters={color:null,region:null,maturity:null,location:null,format:null,peakEnd:null}; document.getElementById('search-input').value=''; render(); }
 
 function getFiltered() {
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
+  const y = new Date().getFullYear();
   return cave.bottles.filter(b=>{
     if(ui.filters.color    && b.color!==ui.filters.color) return false;
     if(ui.filters.location && b.location!==ui.filters.location) return false;
     if(ui.filters.region   && (b.region||'—')!==ui.filters.region) return false;
     if(ui.filters.maturity && mat(b).c!==ui.filters.maturity) return false;
+    if(ui.filters.format   && b.format!==ui.filters.format) return false;
+    if(ui.filters.peakEnd) {
+      const pe = b.peakEnd;
+      if(ui.filters.peakEnd==='retard'    && !(pe && pe < y))        return false;
+      if(ui.filters.peakEnd==='aboire'    && !(pe && pe>=y && pe<=y+1)) return false;
+      if(ui.filters.peakEnd==='peutatten' && !(pe && pe>=y+2 && pe<=y+4)) return false;
+      if(ui.filters.peakEnd==='attendre'  && !(pe && pe>y+4))        return false;
+    }
     if(q && ![b.producer,b.cuvee,b.appellation,b.region,b.grapes].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -803,14 +815,13 @@ function renderTable() {
   tbody.innerHTML = list.map(b=>{
     const m=mat(b);
     return `<tr class="row" onclick="openDetail('${b.id}')">
-      <td><div class="wine-name">${esc(b.cuvee||b.appellation||b.producer)}</div><div class="wine-prod">${esc(b.producer)}</div></td>
+      <td style="max-width:0;width:18%;overflow:hidden"><div class="wine-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.cuvee||b.appellation||b.producer)}</div><div class="wine-prod" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.producer)}</div></td>
       <td><span class="cdot" style="background:${cd[b.color]||'#aaa'}"></span></td>
-      <td style="font-size:11px">${esc(b.appellation||'—')}</td>
+      <td style="font-size:11px;max-width:0;width:14%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(b.appellation||'—')}</td>
       <td style="font-family:'Cormorant Garamond',serif;font-size:16px">${b.vintage||'—'}</td>
-      <td style="font-size:10px;color:var(--muted)">${FMT[b.format]||'—'}</td>
-      <td style="font-size:10px;color:var(--muted)">${LOC[b.location]||'—'}</td>
       <td><span class="qty-pill">${b.quantity}</span></td>
       <td><span class="mbadge ${m.c}">${m.l}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${b.peakEnd||'—'}</td>
       <td style="font-size:11px;font-family:'Cormorant Garamond',serif">${fEur(b.value)}</td>
       <td onclick="event.stopPropagation()"><button class="row-btn" title="Modifier" onclick="ui.currentId='${b.id}';editBottle()" style="margin-right:4px">✎</button><button class="row-btn" title="Sortir" onclick="quickConsume('${b.id}')">↩</button></td>
     </tr>`;
@@ -975,22 +986,18 @@ async function onPhoto(event) {
     const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
     const mtype = file.type || 'image/jpeg';
 
-    const REGIONS = ['Alsace','Argentine','Auvergne','Beaujolais','Bordeaux','Bourgogne','Champagne','Espagne','Italie','Languedoc','Loire','Provence','Rhône','Savoie','Sud-Ouest'];
+    const prompt = `Tu es un sommelier expert. Analyse cette étiquette de vin et extrais les données.
 
-    const prompt = `Tu es un sommelier expert. Analyse cette étiquette de vin, effectue une recherche web pour trouver le prix moyen actuel de cette cuvée, et extrais toutes les données demandées.
+ESTIMATION D'APOGÉE — RÈGLES STRICTES (mode conservateur / apogée courte) :
+Tu dois estimer peakStart et peakEnd en te basant sur :
+- Le TYPE de vin : un grand cru se garde plus qu'un village ou un générique
+- Le CÉPAGE : Nebbiolo, Cabernet Sauvignon, Syrah = longue garde. Gamay, Sauvignon Blanc, Grenache rosé = courte
+- L'APPELLATION : un Pauillac ou un Barolo se garde 15-20 ans. Un Beaujolais ou Muscadet = 2-5 ans
+- Le MILLÉSIME : les grands millésimes (2005, 2009, 2010, 2015, 2016, 2018, 2019, 2020) se gardent plus longtemps
+- La COULEUR : les rosés = 1-3 ans. Les blancs secs simples = 2-5 ans. Les blancs de garde (Bourgogne, Riesling) = 5-15 ans. Les rouges tanniques = 5-25 ans
+- Le PRODUCTEUR : les domaines prestigieux font des vins de plus longue garde
 
-── RÉGION (OBLIGATOIRE) ──
-Tu DOIS choisir exactement une valeur parmi cette liste : ${REGIONS.join(', ')}.
-N'invente pas de région. Si le vin est français mais la région est absente de la liste, choisis la plus proche. Si le vin est étranger, choisis le pays correspondant (Argentine, Espagne, Italie). Si vraiment aucune ne convient, mets null.
-
-── DEGRÉ D'ALCOOL ──
-Lis le taux d'alcool directement sur l'étiquette si visible (ex. "13% vol.", "12,5°"). Si non lisible, estime-le selon le type et l'appellation. Mets null si impossible.
-
-── PRIX MOYEN ──
-Utilise l'outil de recherche web pour chercher le prix moyen actuel de cette cuvée (producteur + cuvée + millésime). Cherche sur des sites comme caviste.com, idealwine.com, wine-searcher.com ou vinatis.com. Retourne le prix moyen en euros (nombre entier), null si non trouvé.
-
-── ESTIMATION D'APOGÉE (mode conservateur) ──
-Base-toi sur : type de vin, cépage, appellation, millésime, couleur, producteur.
+IMPORTANT : sois CONSERVATEUR. Préfère une fenêtre d'apogée COURTE plutôt que trop longue.
 Exemples :
 - Sancerre 2023 → peakStart: 2024, peakEnd: 2027
 - Châteauneuf-du-Pape 2019 → peakStart: 2024, peakEnd: 2030
@@ -1000,7 +1007,7 @@ Exemples :
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans backticks, sans texte avant ou après.
 Format exact :
-{"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","abv":null,"value":null,"peakStart":null,"peakEnd":null}
+{"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","peakStart":null,"peakEnd":null}
 Mets null pour les champs non identifiables. Pour color, déduis du cépage ou du style si besoin.`;
 
     const resp = await fetch('/.netlify/functions/claude', {
@@ -1010,8 +1017,7 @@ Mets null pour les champs non identifiables. Pour color, déduis du cépage ou d
         },
       body: JSON.stringify({
         model: AI_MODEL,
-        max_tokens: 2048,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        max_tokens: 1024,
         messages: [{
           role: 'user',
           content: [
@@ -1028,23 +1034,17 @@ Mets null pour les champs non identifiables. Pour color, déduis du cépage ou d
     }
 
     const data = await resp.json();
-    // La réponse peut contenir des blocs tool_use (web_search) — on cherche le bloc text final
-    const textBlock = (data.content || []).filter(b => b.type === 'text').pop();
-    const txt  = (textBlock ? textBlock.text : '').trim().replace(/```json|```/g,'').trim();
+    const txt  = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
     const p    = JSON.parse(txt);
 
     if(p.producer)    document.getElementById('f-producer').value    = p.producer;
     if(p.cuvee)       document.getElementById('f-cuvee').value        = p.cuvee;
+    if(p.region)      document.getElementById('f-region').value       = p.region;
     if(p.appellation) document.getElementById('f-appellation').value  = p.appellation;
     if(p.vintage)     document.getElementById('f-vintage').value      = p.vintage;
     if(p.grapes)      document.getElementById('f-grapes').value       = p.grapes;
-    if(p.abv)         document.getElementById('f-abv').value          = p.abv;
-    if(p.value)       document.getElementById('f-value').value        = p.value;
     if(p.peakStart)   document.getElementById('f-ps').value           = p.peakStart;
     if(p.peakEnd)     document.getElementById('f-pe').value           = p.peakEnd;
-    // Région : on vérifie que la valeur est dans la liste prédéfinie
-    const VALID_REGIONS = ['Alsace','Argentine','Auvergne','Beaujolais','Bordeaux','Bourgogne','Champagne','Espagne','Italie','Languedoc','Loire','Provence','Rhône','Savoie','Sud-Ouest'];
-    if(p.region && VALID_REGIONS.includes(p.region)) document.getElementById('f-region').value = p.region;
     if(p.color   && ['rouge','blanc','rose'].includes(p.color))           setTGL('tgl-color', p.color);
     if(p.format  && ['bouteille','magnum','jeroboam'].includes(p.format)) setTGL('tgl-format', p.format);
     else setTGL('tgl-format','bouteille');
@@ -1183,28 +1183,68 @@ function renderHist() {
 function renderStats() {
   const t=totBtl(), v=totVal(), el=document.getElementById('stats-content');
   if (!t) { el.innerHTML=`<div class="empty"><div class="empty-title">Cave vide</div></div>`; return; }
+  const y = new Date().getFullYear();
   const bc={rouge:0,blanc:0,rose:0}, br={}, bl={};
+  // Fin d'apogée par tranche de 3 ans
+  const bpe={};
+  // Prix par tranche
+  const bprix={'≤ 8 €':0,'8 – 12 €':0,'12 – 18 €':0,'> 18 €':0};
+  // Prix moyen
+  let svTot=0, sqTot=0;
+
   cave.bottles.forEach(b=>{
     const q=parseInt(b.quantity)||0;
     bc[b.color]=(bc[b.color]||0)+q;
     br[b.region||'?']=(br[b.region||'?']||0)+q;
     bl[b.location]=(bl[b.location]||0)+q;
+    // Fin apogée
+    if(b.peakEnd){
+      const slot = Math.floor(b.peakEnd/3)*3; // tranche de 3 ans
+      const lbl = slot+'-'+(slot+2);
+      bpe[lbl]=(bpe[lbl]||0)+q;
+    }
+    // Prix
+    if(b.value){
+      const pv=parseFloat(b.value);
+      if(pv<=8)        bprix['≤ 8 €']+=q;
+      else if(pv<=12)  bprix['8 – 12 €']+=q;
+      else if(pv<=18)  bprix['12 – 18 €']+=q;
+      else             bprix['> 18 €']+=q;
+      svTot+=pv*q; sqTot+=q;
+    }
   });
+
+  const avgPrice = sqTot ? Math.round(svTot/sqTot).toLocaleString('fr-FR')+' €' : '—';
   const bar=(data,fillFn)=>Object.entries(data).map(([k,n])=>`
     <div class="bar-row"><div class="bar-lbl"><span>${esc(k)}</span><span style="color:var(--muted)">${n} (${Math.round(n/t*100)}%)</span></div>
     <div class="bar-track"><div class="bar-fill" style="width:${(n/t)*100}%;background:${fillFn(k)}"></div></div></div>`).join('');
   const cFill={rouge:'var(--red)',blanc:'#c8a84c',rose:'var(--rose)'};
   const regs=Object.entries(br).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  // Fin apogée trié chronologiquement
+  const peSlots=Object.entries(bpe).sort((a,b)=>a[0].localeCompare(b[0]));
+  // Couleur dégradée selon urgence (rouge=retard, vert=boire, or=attendre)
+  const peColor=k=>{
+    const start=parseInt(k.split('-')[0]);
+    if(start<y) return '#c0392b';
+    if(start<=y+1) return '#2e7d32';
+    if(start<=y+4) return 'var(--gold)';
+    return 'var(--bordeaux)';
+  };
+
   el.innerHTML=`
-    <div class="stat-grid" style="margin-bottom:14px">
+    <div class="stat-grid" style="margin-bottom:14px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
       <div class="stat-card"><div class="stat-lbl">Total</div><div class="stat-val">${t}</div><div class="stat-sub">bouteilles</div></div>
-      <div class="stat-card"><div class="stat-lbl">Valeur</div><div class="stat-val">${Math.round(v).toLocaleString('fr-FR')}</div><div class="stat-sub">euros</div></div>
+      <div class="stat-card"><div class="stat-lbl">Valeur totale</div><div class="stat-val">${Math.round(v).toLocaleString('fr-FR')}</div><div class="stat-sub">euros</div></div>
+      <div class="stat-card"><div class="stat-lbl">Prix moyen / btl</div><div class="stat-val" style="font-size:18px">${avgPrice}</div><div class="stat-sub">pondéré</div></div>
       <div class="stat-card"><div class="stat-lbl">Sorties</div><div class="stat-val">${cave.history.reduce((s,h)=>s+(h.quantity||0),0)}</div><div class="stat-sub">total</div></div>
       <div class="stat-card"><div class="stat-lbl">Producteurs</div><div class="stat-val">${new Set(cave.bottles.map(b=>b.producer)).size}</div><div class="stat-sub">distincts</div></div>
     </div>
     <div class="stats-sec"><div class="stats-sec-title">Par couleur</div>${bar(bc,k=>cFill[k]||'var(--bordeaux)')}</div>
     <div class="stats-sec"><div class="stats-sec-title">Par région</div>${regs.map(([r,n])=>`<div class="bar-row"><div class="bar-lbl"><span>${esc(r)}</span><span style="color:var(--muted)">${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${(n/t)*100}%;background:var(--bordeaux)"></div></div></div>`).join('')}</div>
-    <div class="stats-sec"><div class="stats-sec-title">Par emplacement</div>${Object.entries(bl).map(([l,n])=>`<div class="bar-row"><div class="bar-lbl"><span>${LOC[l]||esc(l)}</span><span style="color:var(--muted)">${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${(n/t)*100}%;background:var(--gold)"></div></div></div>`).join('')}</div>`;
+    <div class="stats-sec"><div class="stats-sec-title">Par fin d'apogée</div>${peSlots.length?peSlots.map(([k,n])=>`<div class="bar-row"><div class="bar-lbl"><span>${esc(k)}</span><span style="color:var(--muted)">${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${(n/t)*100}%;background:${peColor(k)}"></div></div></div>`).join(''):'<div style="font-size:10px;color:var(--muted)">Aucune apogée renseignée</div>'}</div>
+    <div class="stats-sec"><div class="stats-sec-title">Par tranche de prix</div>${Object.entries(bprix).map(([k,n])=>`<div class="bar-row"><div class="bar-lbl"><span>${esc(k)}</span><span style="color:var(--muted)">${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${t?n/t*100:0}%;background:var(--gold)"></div></div></div>`).join('')}</div>
+    <div class="stats-sec"><div class="stats-sec-title">Par emplacement</div>${Object.entries(bl).map(([l,n])=>`<div class="bar-row"><div class="bar-lbl"><span>${LOC[l]||esc(l)}</span><span style="color:var(--muted)">${n}</span></div><div class="bar-track"><div class="bar-fill" style="width:${(n/t)*100}%;background:var(--muted)"></div></div></div>`).join('')}</div>`;
 }
 
 /* ── API KEY ── */
