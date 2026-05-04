@@ -444,7 +444,7 @@
         <div id="p-load" style="display:none">
           <div class="ai-wrap">
             <div class="ai-spin"></div>
-            <div class="ai-txt">Claude analyse l'étiquette…</div>
+            <div class="ai-txt">Claude analyse l'étiquette et recherche le prix…</div>
           </div>
         </div>
         <div id="p-done" style="display:none">
@@ -975,18 +975,22 @@ async function onPhoto(event) {
     const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
     const mtype = file.type || 'image/jpeg';
 
-    const prompt = `Tu es un sommelier expert. Analyse cette étiquette de vin et extrais les données.
+    const REGIONS = ['Alsace','Argentine','Auvergne','Beaujolais','Bordeaux','Bourgogne','Champagne','Espagne','Italie','Languedoc','Loire','Provence','Rhône','Savoie','Sud-Ouest'];
 
-ESTIMATION D'APOGÉE — RÈGLES STRICTES (mode conservateur / apogée courte) :
-Tu dois estimer peakStart et peakEnd en te basant sur :
-- Le TYPE de vin : un grand cru se garde plus qu'un village ou un générique
-- Le CÉPAGE : Nebbiolo, Cabernet Sauvignon, Syrah = longue garde. Gamay, Sauvignon Blanc, Grenache rosé = courte
-- L'APPELLATION : un Pauillac ou un Barolo se garde 15-20 ans. Un Beaujolais ou Muscadet = 2-5 ans
-- Le MILLÉSIME : les grands millésimes (2005, 2009, 2010, 2015, 2016, 2018, 2019, 2020) se gardent plus longtemps
-- La COULEUR : les rosés = 1-3 ans. Les blancs secs simples = 2-5 ans. Les blancs de garde (Bourgogne, Riesling) = 5-15 ans. Les rouges tanniques = 5-25 ans
-- Le PRODUCTEUR : les domaines prestigieux font des vins de plus longue garde
+    const prompt = `Tu es un sommelier expert. Analyse cette étiquette de vin, effectue une recherche web pour trouver le prix moyen actuel de cette cuvée, et extrais toutes les données demandées.
 
-IMPORTANT : sois CONSERVATEUR. Préfère une fenêtre d'apogée COURTE plutôt que trop longue.
+── RÉGION (OBLIGATOIRE) ──
+Tu DOIS choisir exactement une valeur parmi cette liste : ${REGIONS.join(', ')}.
+N'invente pas de région. Si le vin est français mais la région est absente de la liste, choisis la plus proche. Si le vin est étranger, choisis le pays correspondant (Argentine, Espagne, Italie). Si vraiment aucune ne convient, mets null.
+
+── DEGRÉ D'ALCOOL ──
+Lis le taux d'alcool directement sur l'étiquette si visible (ex. "13% vol.", "12,5°"). Si non lisible, estime-le selon le type et l'appellation. Mets null si impossible.
+
+── PRIX MOYEN ──
+Utilise l'outil de recherche web pour chercher le prix moyen actuel de cette cuvée (producteur + cuvée + millésime). Cherche sur des sites comme caviste.com, idealwine.com, wine-searcher.com ou vinatis.com. Retourne le prix moyen en euros (nombre entier), null si non trouvé.
+
+── ESTIMATION D'APOGÉE (mode conservateur) ──
+Base-toi sur : type de vin, cépage, appellation, millésime, couleur, producteur.
 Exemples :
 - Sancerre 2023 → peakStart: 2024, peakEnd: 2027
 - Châteauneuf-du-Pape 2019 → peakStart: 2024, peakEnd: 2030
@@ -996,7 +1000,7 @@ Exemples :
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans backticks, sans texte avant ou après.
 Format exact :
-{"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","peakStart":null,"peakEnd":null}
+{"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","abv":null,"value":null,"peakStart":null,"peakEnd":null}
 Mets null pour les champs non identifiables. Pour color, déduis du cépage ou du style si besoin.`;
 
     const resp = await fetch('/.netlify/functions/claude', {
@@ -1006,7 +1010,8 @@ Mets null pour les champs non identifiables. Pour color, déduis du cépage ou d
         },
       body: JSON.stringify({
         model: AI_MODEL,
-        max_tokens: 1024,
+        max_tokens: 2048,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
           content: [
@@ -1023,17 +1028,23 @@ Mets null pour les champs non identifiables. Pour color, déduis du cépage ou d
     }
 
     const data = await resp.json();
-    const txt  = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
+    // La réponse peut contenir des blocs tool_use (web_search) — on cherche le bloc text final
+    const textBlock = (data.content || []).filter(b => b.type === 'text').pop();
+    const txt  = (textBlock ? textBlock.text : '').trim().replace(/```json|```/g,'').trim();
     const p    = JSON.parse(txt);
 
     if(p.producer)    document.getElementById('f-producer').value    = p.producer;
     if(p.cuvee)       document.getElementById('f-cuvee').value        = p.cuvee;
-    if(p.region)      document.getElementById('f-region').value       = p.region;
     if(p.appellation) document.getElementById('f-appellation').value  = p.appellation;
     if(p.vintage)     document.getElementById('f-vintage').value      = p.vintage;
     if(p.grapes)      document.getElementById('f-grapes').value       = p.grapes;
+    if(p.abv)         document.getElementById('f-abv').value          = p.abv;
+    if(p.value)       document.getElementById('f-value').value        = p.value;
     if(p.peakStart)   document.getElementById('f-ps').value           = p.peakStart;
     if(p.peakEnd)     document.getElementById('f-pe').value           = p.peakEnd;
+    // Région : on vérifie que la valeur est dans la liste prédéfinie
+    const VALID_REGIONS = ['Alsace','Argentine','Auvergne','Beaujolais','Bordeaux','Bourgogne','Champagne','Espagne','Italie','Languedoc','Loire','Provence','Rhône','Savoie','Sud-Ouest'];
+    if(p.region && VALID_REGIONS.includes(p.region)) document.getElementById('f-region').value = p.region;
     if(p.color   && ['rouge','blanc','rose'].includes(p.color))           setTGL('tgl-color', p.color);
     if(p.format  && ['bouteille','magnum','jeroboam'].includes(p.format)) setTGL('tgl-format', p.format);
     else setTGL('tgl-format','bouteille');
