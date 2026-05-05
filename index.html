@@ -1038,17 +1038,12 @@ Format : {"vintage":null,"value":null,"peakStart":null,"peakEnd":null}`;
           }
         })
       });
-      const d2 = await r2.json();
-      if (!r2.ok) {
-        // Affiche le détail de l'erreur Gemini directement en toast
-        const errMsg = d2?.error?.message || d2?.error || JSON.stringify(d2).slice(0,120);
-        toast('Gemini ' + r2.status + ' : ' + errMsg, true);
-      } else {
-        const t2 = d2?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        toast('Gemini brut : ' + t2.slice(0,120), false); // DEBUG — à retirer
-        if (!t2) {
-          toast('Gemini : réponse vide — ' + JSON.stringify(d2).slice(0,100), true);
-        } else {
+      const rawText = await r2.text();
+      toast('G:' + r2.status + ' ' + rawText.slice(0,120), !r2.ok);
+      if (r2.ok) {
+        try {
+          const d2 = JSON.parse(rawText);
+          const t2 = d2?.candidates?.[0]?.content?.parts?.[0]?.text || '';
           const m2 = t2.match(/\{[\s\S]*\}/);
           if (m2) {
             const g = JSON.parse(m2[0]);
@@ -1059,13 +1054,13 @@ Format : {"vintage":null,"value":null,"peakStart":null,"peakEnd":null}`;
             if(g.value)     document.getElementById('f-value').value    = g.value;
             if(g.peakStart) document.getElementById('f-ps').value       = g.peakStart;
             if(g.peakEnd)   document.getElementById('f-pe').value       = g.peakEnd;
-          } else {
-            toast('Gemini : JSON introuvable dans — ' + t2.slice(0,80), true);
           }
+        } catch(parseErr) {
+          toast('G parse err: ' + parseErr.message, true);
         }
       }
     } catch(geminiErr) {
-      toast('Gemini catch : ' + (geminiErr.message||String(geminiErr)), true);
+      toast('G catch: ' + (geminiErr.message||String(geminiErr)), true);
     }
 
     document.getElementById('photo-preview').src = `data:${mtype};base64,${base64}`;
