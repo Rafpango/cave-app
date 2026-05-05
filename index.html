@@ -1211,6 +1211,22 @@ function histo(data, color='var(--bordeaux)', labelFn=k=>k) {
     }).join('') + `</div>`;
 }
 
+function histoPeak(data, colorFn) {
+  if (!data.length) return '<div style="font-size:10px;color:var(--muted)">Aucune donnée</div>';
+  const max = Math.max(...data.map(d=>d.v));
+  let html = '<div style="display:flex;align-items:flex-end;gap:3px;height:90px;padding-bottom:20px">';
+  data.forEach(d=>{
+    const h = max ? Math.round((d.v/max)*70) : 0;
+    html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">'
+      + '<span style="font-size:7px;color:var(--muted)">' + (d.v||'') + '</span>'
+      + '<div style="width:100%;height:'+h+'px;background:'+colorFn(d.k)+';min-height:'+(d.v?2:0)+'px" title="'+d.k+': '+d.v+'"></div>'
+      + '<span style="font-size:7px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg)">'+d.k+'</span>'
+      + '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
 function renderStats() {
   const t=totBtl(), v=totVal(), el=document.getElementById('stats-content');
   if (!t) { el.innerHTML=`<div class="empty"><div class="empty-title">Cave vide</div></div>`; return; }
@@ -1320,9 +1336,7 @@ function renderStats() {
     <!-- Ligne 2 : millésime + apogée -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
       ${card('Bouteilles par millésime', histo(vintData,'var(--bordeaux)'))}
-      ${card('Bouteilles par fin d'apogée', `<div style="display:flex;align-items:flex-end;gap:3px;height:90px;padding-bottom:20px">` +
-        peakData.map(d=>{const max2=Math.max(...peakData.map(x=>x.v));const h=max2?Math.round((d.v/max2)*70):0;return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px"><span style="font-size:7px;color:var(--muted)">${d.v||''}</span><div style="width:100%;height:${h}px;background:${peakColor(d.k)};min-height:${d.v?2:0}px" title="${d.k}: ${d.v}"></div><span style="font-size:7px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg)">${d.k}</span></div>`;}).join('') +
-      `</div>`)}
+      ${card('Fin d’apéogée', histoPeak(peakData, peakColor))}
     </div>
 
     <!-- Ligne 3 : sorties/semaine + prix -->
