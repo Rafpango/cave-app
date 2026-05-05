@@ -104,7 +104,7 @@
     .m-rdy { background: #e8f5e9; color: #2e7d32; }
     .m-soon { background: #fff8e1; color: #f57f17; }
     .m-wt  { background: #fff3e0; color: #e65100; }
-    .m-dk  { background: #fce4ec; color: #880e4f; }
+    .m-dk  { background: #fce4ec; color: #b71c1c; }
     .m-na  { background: #eee; color: #888; }
     .row-btn { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 13px; color: var(--muted); transition: all .12s; border-radius: 0; }
     .row-btn:hover { border-color: var(--bordeaux); color: var(--bordeaux); }
@@ -459,7 +459,24 @@
         <div class="fgrid">
           <div class="fg"><label class="flbl req">Producteur</label><input class="finput" type="text" id="f-producer" placeholder="ex. Domaine Leflaive"></div>
           <div class="fg"><label class="flbl">Cuvée</label><input class="finput" type="text" id="f-cuvee" placeholder="ex. Les Pucelles"></div>
-          <div class="fg"><label class="flbl">Région</label><input class="finput" type="text" id="f-region" placeholder="ex. Bourgogne"></div>
+          <div class="fg"><label class="flbl">Région</label><select class="finput" id="f-region">
+            <option value="">— Choisir —</option>
+            <option value="Alsace">Alsace</option>
+            <option value="Argentine">Argentine</option>
+            <option value="Auvergne">Auvergne</option>
+            <option value="Beaujolais">Beaujolais</option>
+            <option value="Bordeaux">Bordeaux</option>
+            <option value="Bourgogne">Bourgogne</option>
+            <option value="Champagne">Champagne</option>
+            <option value="Espagne">Espagne</option>
+            <option value="Italie">Italie</option>
+            <option value="Languedoc">Languedoc</option>
+            <option value="Loire">Loire</option>
+            <option value="Provence">Provence</option>
+            <option value="Rhône">Rhône</option>
+            <option value="Savoie">Savoie</option>
+            <option value="Sud-Ouest">Sud-Ouest</option>
+          </select></div>
           <div class="fg"><label class="flbl">Appellation</label><input class="finput" type="text" id="f-appellation" placeholder="ex. Puligny-Montrachet"></div>
           <div class="fg frow">
             <label class="flbl req">Couleur</label>
@@ -709,13 +726,9 @@ function render() {
 }
 
 function weekStart() {
-  const now = new Date();
-  const d = new Date(now);
-  const day = d.getDay(); // 0=Sun,1=Mon...
-  const diff = (day === 0 ? -6 : 1 - day); // back to Monday
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 1, 0, 0);
-  return d;
+  const now = new Date(); const d = new Date(now);
+  const day = d.getDay(); const diff = (day === 0 ? -6 : 1 - day);
+  d.setDate(d.getDate() + diff); d.setHours(0, 1, 0, 0); return d;
 }
 
 function renderStatGrid() {
@@ -724,20 +737,19 @@ function renderStatGrid() {
   let avg = '—';
   const wv = cave.bottles.filter(b=>b.vintage);
   if (wv.length) { let w=0,q=0; wv.forEach(b=>{const n=parseInt(b.quantity)||1;w+=b.vintage*n;q+=n;}); avg=Math.round(w/q); }
-  // Prix moyen pondéré
   const bwv = cave.bottles.filter(b=>b.value&&parseInt(b.quantity)>0);
   let avgPrice = '—';
-  if (bwv.length) { let sv=0,sq=0; bwv.forEach(b=>{const q=parseInt(b.quantity)||1;sv+=parseFloat(b.value)*q;sq+=q;}); avgPrice=Math.round(sv/sq).toLocaleString('fr-FR')+' €'; }
-  // Sorties semaine
+  if (bwv.length) { let sv=0,sq=0; bwv.forEach(b=>{const q2=parseInt(b.quantity)||1;sv+=parseFloat(b.value)*q2;sq+=q2;}); avgPrice=Math.round(sv/sq).toLocaleString('fr-FR')+' €'; }
   const ws = weekStart();
   const sortiesSem = cave.history.filter(h=>new Date(h.date)>=ws).reduce((s,h)=>s+(h.quantity||0),0);
-  document.getElementById('stat-grid').innerHTML = `
-    <div class="stat-card"><div class="stat-lbl">Total cave</div><div class="stat-val">${t}</div><div class="stat-sub">bouteilles</div></div>
-    <div class="stat-card"><div class="stat-lbl">Valeur estimée</div><div class="stat-val">${Math.round(v).toLocaleString('fr-FR')}</div><div class="stat-sub">euros</div></div>
-    <div class="stat-card"><div class="stat-lbl">Prêtes à boire</div><div class="stat-val">${rdy}</div><div class="stat-sub">bouteilles</div></div>
-    <div class="stat-card"><div class="stat-lbl">Millésime moyen</div><div class="stat-val">${avg}</div><div class="stat-sub">pondéré</div></div>
-    <div class="stat-card"><div class="stat-lbl">Prix moyen / btl</div><div class="stat-val" style="font-size:18px">${avgPrice}</div><div class="stat-sub">pondéré par qté</div></div>
-    <div class="stat-card"><div class="stat-lbl">Sorties semaine</div><div class="stat-val">${sortiesSem}</div><div class="stat-sub">depuis lundi 00h01</div></div>`;
+  document.getElementById('stat-grid').innerHTML = [
+    '<div class="stat-card"><div class="stat-lbl">Total cave</div><div class="stat-val">'+t+'</div><div class="stat-sub">bouteilles</div></div>',
+    '<div class="stat-card"><div class="stat-lbl">Valeur estimée</div><div class="stat-val">'+Math.round(v).toLocaleString('fr-FR')+'</div><div class="stat-sub">euros</div></div>',
+    '<div class="stat-card"><div class="stat-lbl">Prêtes à boire</div><div class="stat-val">'+rdy+'</div><div class="stat-sub">bouteilles</div></div>',
+    '<div class="stat-card"><div class="stat-lbl">Millésime moyen</div><div class="stat-val">'+avg+'</div><div class="stat-sub">pondéré</div></div>',
+    '<div class="stat-card"><div class="stat-lbl">Prix moyen / btl</div><div class="stat-val" style="font-size:18px">'+avgPrice+'</div><div class="stat-sub">pondéré par qté</div></div>',
+    '<div class="stat-card"><div class="stat-lbl">Sorties semaine</div><div class="stat-val">'+sortiesSem+'</div><div class="stat-sub">depuis lundi 00h01</div></div>'
+  ].join('');
 }
 
 function renderSidebar() {
@@ -970,65 +982,71 @@ function doUpload() { document.getElementById('inp-upload').click(); }
 async function onPhoto(event) {
   const file = event.target.files[0]; if (!file) return;
 
+
   document.getElementById('p-pick').style.display = 'none';
   document.getElementById('p-load').style.display = 'block';
-  document.querySelector('#p-load .ai-txt').textContent = 'Claude analyse l\'étiquette…';
 
   try {
     const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
     const mtype = file.type || 'image/jpeg';
 
-    const REGIONS = ['Alsace','Argentine','Auvergne','Beaujolais','Bordeaux','Bourgogne','Champagne','Espagne','Italie','Languedoc','Loire','Provence','Rhône','Savoie','Sud-Ouest'];
+    const prompt = `Tu es un sommelier expert. Analyse cette étiquette de vin et extrais les données.
 
-    const prompt = `Tu es un sommelier expert. Analyse cette étiquette de vin, effectue une recherche web pour trouver le prix moyen actuel, et extrais toutes les données.
+ESTIMATION D'APOGÉE — RÈGLES STRICTES (mode conservateur / apogée courte) :
+Tu dois estimer peakStart et peakEnd en te basant sur :
+- Le TYPE de vin : un grand cru se garde plus qu'un village ou un générique
+- Le CÉPAGE : Nebbiolo, Cabernet Sauvignon, Syrah = longue garde. Gamay, Sauvignon Blanc, Grenache rosé = courte
+- L'APPELLATION : un Pauillac ou un Barolo se garde 15-20 ans. Un Beaujolais ou Muscadet = 2-5 ans
+- Le MILLÉSIME : les grands millésimes (2005, 2009, 2010, 2015, 2016, 2018, 2019, 2020) se gardent plus longtemps
+- La COULEUR : les rosés = 1-3 ans. Les blancs secs simples = 2-5 ans. Les blancs de garde (Bourgogne, Riesling) = 5-15 ans. Les rouges tanniques = 5-25 ans
+- Le PRODUCTEUR : les domaines prestigieux font des vins de plus longue garde
 
-── RÉGION ──
-Choisis EXACTEMENT dans cette liste : ${REGIONS.join(', ')}. null si aucune ne convient.
+IMPORTANT : sois CONSERVATEUR. Préfère une fenêtre d'apogée COURTE plutôt que trop longue.
+Exemples :
+- Sancerre 2023 → peakStart: 2024, peakEnd: 2027
+- Châteauneuf-du-Pape 2019 → peakStart: 2024, peakEnd: 2030
+- Pauillac Grand Cru 2016 → peakStart: 2026, peakEnd: 2036
+- Rosé Provence 2024 → peakStart: 2024, peakEnd: 2026
+- Bourgogne Village rouge 2021 → peakStart: 2024, peakEnd: 2028
 
-── DEGRÉ D'ALCOOL ──
-Lis sur l'étiquette si visible, sinon estime selon appellation/cépage. null si impossible.
-
-── PRIX MOYEN ──
-Recherche le prix actuel sur Wine Searcher, iDealwine ou Vinatis. Entier en euros, null si introuvable.
-
-── APOGÉE ──
-Estime de façon RÉALISTE et AMBITIEUSE (pas conservatrice). Base-toi sur les guides des grands millésimes et les critiques (Parker, Bettane, RVF). N'hésite pas à donner des fenêtres longues pour les grands vins.
-Exemples : Pauillac top château 2016 → 2026-2045 ; Bourgogne GC 2019 → 2027-2042 ; Sancerre 2022 → 2024-2028 ; Champagne NM → 2024-2032 ; Provence rosé 2023 → 2024-2026 ; Côtes du Rhône 2021 → 2024-2028.
-
-Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks.
-Format : {"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","abv":null,"value":null,"peakStart":null,"peakEnd":null}
-null pour les champs non identifiables.`;
+Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans backticks, sans texte avant ou après.
+Format exact :
+{"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","peakStart":null,"peakEnd":null}
+Mets null pour les champs non identifiables. Pour color, déduis du cépage ou du style si besoin.`;
 
     const resp = await fetch('/.netlify/functions/claude', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        },
       body: JSON.stringify({
         model: AI_MODEL,
-        max_tokens: 2048,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: [
-          { type: 'image', source: { type: 'base64', media_type: mtype, data: base64 } },
-          { type: 'text', text: prompt }
-        ]}]
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mtype, data: base64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
       })
     });
 
-    if (!resp.ok) throw new Error(`Claude ${resp.status} — ${(await resp.text()).slice(0,200)}`);
+    if (!resp.ok) {
+      const body = await resp.text();
+      throw new Error(`Erreur ${resp.status} — ${body.slice(0,300)}`);
+    }
 
     const data = await resp.json();
-    const allText = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
-    const jsonMatch = allText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Aucun JSON dans la réponse Claude');
-    const p = JSON.parse(jsonMatch[0]);
+    const txt  = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
+    const p    = JSON.parse(txt);
 
     if(p.producer)    document.getElementById('f-producer').value    = p.producer;
     if(p.cuvee)       document.getElementById('f-cuvee').value        = p.cuvee;
-    if(p.region && REGIONS.includes(p.region)) document.getElementById('f-region').value = p.region;
+    if(p.region)      document.getElementById('f-region').value       = p.region;
     if(p.appellation) document.getElementById('f-appellation').value  = p.appellation;
     if(p.vintage)     document.getElementById('f-vintage').value      = p.vintage;
     if(p.grapes)      document.getElementById('f-grapes').value       = p.grapes;
-    if(p.abv)         document.getElementById('f-abv').value          = p.abv;
-    if(p.value)       document.getElementById('f-value').value        = p.value;
     if(p.peakStart)   document.getElementById('f-ps').value           = p.peakStart;
     if(p.peakEnd)     document.getElementById('f-pe').value           = p.peakEnd;
     if(p.color   && ['rouge','blanc','rose'].includes(p.color))           setTGL('tgl-color', p.color);
@@ -1046,9 +1064,7 @@ null pour les champs non identifiables.`;
   } catch(e) {
     document.getElementById('p-load').style.display = 'none';
     document.getElementById('p-pick').style.display = 'block';
-    const msg = e.message.includes('JSON') ? 'Réponse IA illisible — réessaie' : 'Erreur : ' + e.message;
-    toast(msg, true);
-    console.error('[Photo IA]', e);
+    toast('Erreur : ' + e.message, true);
   }
   event.target.value = '';
 }
@@ -1169,181 +1185,126 @@ function renderHist() {
 
 /* ── STATS ── */
 
-// ── SVG helpers ──
-function pie(data, colors, size=140) {
-  const total = data.reduce((s,d)=>s+d.v,0);
-  if (!total) return `<svg width="${size}" height="${size}"><text x="50%" y="50%" text-anchor="middle" fill="#aaa" font-size="10">Aucune donnée</text></svg>`;
-  const cx=size/2, cy=size/2, r=size/2-2;
-  let angle=-Math.PI/2, paths='', legends='';
-  data.forEach((d,i)=>{
+function pie(data, colors, size) {
+  size = size || 140;
+  var total = data.reduce(function(s,d){return s+d.v;},0);
+  if (!total) return '<svg width="'+size+'" height="'+size+'"><text x="50%" y="50%" text-anchor="middle" fill="#aaa" font-size="10">Aucune donnée</text></svg>';
+  var cx=size/2, cy=size/2, r=size/2-2, angle=-Math.PI/2, paths='';
+  data.forEach(function(d,i){
     if(!d.v) return;
-    const slice=2*Math.PI*d.v/total;
-    const x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
+    var slice=2*Math.PI*d.v/total;
+    var x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
     angle+=slice;
-    const x2=cx+r*Math.cos(angle), y2=cy+r*Math.sin(angle);
-    const large=slice>Math.PI?1:0;
-    paths+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z" fill="${colors[i%colors.length]}" opacity="0.9">
-      <title>${esc(d.k)} : ${d.v} (${Math.round(d.v/total*100)}%)</title></path>`;
+    var x2=cx+r*Math.cos(angle), y2=cy+r*Math.sin(angle);
+    var large=slice>Math.PI?1:0;
+    paths+='<path d="M'+cx+','+cy+' L'+x1.toFixed(2)+','+y1.toFixed(2)+' A'+r+','+r+' 0 '+large+' 1 '+x2.toFixed(2)+','+y2.toFixed(2)+' Z" fill="'+colors[i%colors.length]+'" opacity="0.9"><title>'+esc(d.k)+' : '+d.v+' ('+Math.round(d.v/total*100)+'%)</title></path>';
   });
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${paths}</svg>`;
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">'+paths+'</svg>';
 }
 
 function pieLegend(data, colors, total) {
-  return data.filter(d=>d.v>0).map((d,i)=>`
-    <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;font-size:9px">
-      <span style="width:8px;height:8px;border-radius:50%;background:${colors[i%colors.length]};flex-shrink:0"></span>
-      <span style="color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.k)}</span>
-      <span style="color:var(--muted)">${d.v} (${Math.round(d.v/total*100)}%)</span>
-    </div>`).join('');
+  return data.filter(function(d){return d.v>0;}).map(function(d,i){
+    return '<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;font-size:9px">'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+colors[i%colors.length]+';flex-shrink:0"></span>'
+      +'<span style="color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.k)+'</span>'
+      +'<span style="color:var(--muted)">'+d.v+' ('+Math.round(d.v/total*100)+'%)</span>'
+      +'</div>';
+  }).join('');
 }
 
-function histo(data, color='var(--bordeaux)', labelFn=k=>k) {
+function histo(data, color, labelFn) {
+  color = color || 'var(--bordeaux)';
+  labelFn = labelFn || function(k){return k;};
   if (!data.length) return '<div style="font-size:10px;color:var(--muted)">Aucune donnée</div>';
-  const max = Math.max(...data.map(d=>d.v));
-  return `<div style="display:flex;align-items:flex-end;gap:3px;height:270px;padding-bottom:20px;position:relative">` +
-    data.map(d=>{
-      const h = max ? Math.round((d.v/max)*70) : 0;
-      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">
-        <span style="font-size:7px;color:var(--muted)">${d.v||''}</span>
-        <div style="width:100%;height:${h}px;background:${color};min-height:${d.v?2:0}px"></div>
-        <span style="font-size:7px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;max-height:18px;overflow:hidden">${labelFn(d.k)}</span>
-      </div>`;
-    }).join('') + `</div>`;
+  var max = Math.max.apply(null, data.map(function(d){return d.v;}));
+  var html = '<div style="display:flex;align-items:flex-end;gap:3px;height:270px;padding-bottom:20px;position:relative">';
+  data.forEach(function(d){
+    var h = max ? Math.round((d.v/max)*240) : 0;
+    html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">'
+      +'<span style="font-size:7px;color:var(--muted)">'+(d.v||'')+'</span>'
+      +'<div style="width:100%;height:'+h+'px;background:'+color+';min-height:'+(d.v?2:0)+'px"></div>'
+      +'<span style="font-size:7px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;max-height:18px;overflow:hidden">'+labelFn(d.k)+'</span>'
+      +'</div>';
+  });
+  return html+'</div>';
 }
 
 function histoPeak(data, colorFn) {
   if (!data.length) return '<div style="font-size:10px;color:var(--muted)">Aucune donnée</div>';
-  const max = Math.max(...data.map(d=>d.v));
-  let html = '<div style="display:flex;align-items:flex-end;gap:3px;height:270px;padding-bottom:20px">';
-  data.forEach(d=>{
-    const h = max ? Math.round((d.v/max)*240) : 0;
+  var max = Math.max.apply(null, data.map(function(d){return d.v;}));
+  var html = '<div style="display:flex;align-items:flex-end;gap:3px;height:270px;padding-bottom:20px">';
+  data.forEach(function(d){
+    var h = max ? Math.round((d.v/max)*240) : 0;
     html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">'
-      + '<span style="font-size:7px;color:var(--muted)">' + (d.v||'') + '</span>'
-      + '<div style="width:100%;height:'+h+'px;background:'+colorFn(d.k)+';min-height:'+(d.v?2:0)+'px" title="'+d.k+': '+d.v+'"></div>'
-      + '<span style="font-size:7px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg)">'+d.k+'</span>'
-      + '</div>';
+      +'<span style="font-size:7px;color:var(--muted)">'+(d.v||'')+'</span>'
+      +'<div style="width:100%;height:'+h+'px;background:'+colorFn(d.k)+';min-height:'+(d.v?2:0)+'px" title="'+d.k+': '+d.v+'"></div>'
+      +'<span style="font-size:7px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg)">'+d.k+'</span>'
+      +'</div>';
   });
-  html += '</div>';
-  return html;
+  return html+'</div>';
 }
 
 function renderStats() {
-  const t=totBtl(), v=totVal(), el=document.getElementById('stats-content');
-  if (!t) { el.innerHTML=`<div class="empty"><div class="empty-title">Cave vide</div></div>`; return; }
-
-  const y = new Date().getFullYear();
-
-  // ── Données couleur ──
-  const bc={rouge:0,blanc:0,rose:0};
-  // ── Données région par couleur ──
-  const brBlanc={}, brRouge={};
-  // ── Millésimes ──
-  const bvint={};
-  // ── Apogée fin ──
-  const bpeak={};
-  // ── Prix ──
-  const bprix={'< 8€':0,'8-12€':0,'12-18€':0,'> 18€':0};
-  // ── Sorties par semaine (10 dernières) ──
-  const bweeks={};
-
-  cave.bottles.forEach(b=>{
-    const q=parseInt(b.quantity)||0;
+  var t=totBtl(), v=totVal(), el=document.getElementById('stats-content');
+  if (!t) { el.innerHTML='<div class="empty"><div class="empty-title">Cave vide</div></div>'; return; }
+  var y=new Date().getFullYear();
+  var bc={rouge:0,blanc:0,rose:0}, brBlanc={}, brRouge={}, bvint={}, bpeak={};
+  var bprix={'< 8€':0,'8-12€':0,'12-18€':0,'> 18€':0}, bweeks={};
+  cave.bottles.forEach(function(b){
+    var q=parseInt(b.quantity)||0;
     bc[b.color]=(bc[b.color]||0)+q;
-    if(b.color==='blanc' && b.region) brBlanc[b.region]=(brBlanc[b.region]||0)+q;
-    if(b.color==='rouge' && b.region) brRouge[b.region]=(brRouge[b.region]||0)+q;
+    if(b.color==='blanc'&&b.region) brBlanc[b.region]=(brBlanc[b.region]||0)+q;
+    if(b.color==='rouge'&&b.region) brRouge[b.region]=(brRouge[b.region]||0)+q;
     if(b.vintage) bvint[b.vintage]=(bvint[b.vintage]||0)+q;
     if(b.peakEnd) bpeak[b.peakEnd]=(bpeak[b.peakEnd]||0)+q;
-    if(b.value){ const pv=parseFloat(b.value);
+    if(b.value){var pv=parseFloat(b.value);
       if(pv<8.01) bprix['< 8€']+=q;
       else if(pv<=12) bprix['8-12€']+=q;
       else if(pv<=18) bprix['12-18€']+=q;
-      else bprix['> 18€']+=q;
-    }
+      else bprix['> 18€']+=q;}
   });
-
-  // Sorties par semaine — 10 dernières semaines
-  const getWeekKey = dateStr => {
-    const d = new Date(dateStr);
-    const day = d.getDay(); const diff = day===0?-6:1-day;
-    d.setDate(d.getDate()+diff); d.setHours(0,0,0,0);
-    return d.toISOString().slice(0,10);
-  };
-  cave.history.forEach(h=>{ if(!h.date) return; const wk=getWeekKey(h.date); bweeks[wk]=(bweeks[wk]||0)+(h.quantity||0); });
-  // Build last 10 weeks
-  const weeksData=[];
-  for(let i=9;i>=0;i--){
-    const d=new Date(); const day=d.getDay(); const diff=day===0?-6:1-day;
-    d.setDate(d.getDate()+diff-i*7); d.setHours(0,0,0,0);
-    const k=d.toISOString().slice(0,10);
-    const label='S'+(i===0?'(cur)':'-'+i);
-    weeksData.push({k, v:bweeks[k]||0, label});
-  }
-
-  // Pie colors
-  const colColors=['var(--red)','#c8a84c','var(--rose)'];
-  const regColors=['#6b1f2a','#c9a84c','#4a7c59','#2c5f8a','#8b4513','#6b4c8a','#2e7d6b','#a0522d','#4682b4','#b8860b','#556b2f','#8b008b'];
-
-  const colData=[{k:'Rouge',v:bc.rouge},{k:'Blanc',v:bc.blanc},{k:'Rosé',v:bc.rose}];
-  const blancRegs=Object.entries(brBlanc).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>({k,v}));
-  const rougeRegs=Object.entries(brRouge).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>({k,v}));
-
-  // Histo millésime
-  const vintKeys=Object.keys(bvint).sort();
-  const vintData=vintKeys.map(k=>({k,v:bvint[k]}));
-
-  // Histo apogée fin
-  const peakKeys=Object.keys(bpeak).sort();
-  const peakData=peakKeys.map(k=>({k,v:bpeak[k]}));
-  const peakColor=k=>{ const n=parseInt(k); if(n<y) return '#c0392b'; if(n<=y+1) return '#2e7d32'; if(n<=y+4) return'var(--gold)'; return'var(--bordeaux)'; };
-
-  // Prix histo
-  const prixData=Object.entries(bprix).map(([k,v])=>({k,v}));
-
-  // Prix moyen + sorties semaine
-  const bwv2=cave.bottles.filter(b=>b.value&&parseInt(b.quantity)>0);
-  let avgPrice='—';
-  if(bwv2.length){let sv=0,sq=0;bwv2.forEach(b=>{const q=parseInt(b.quantity)||1;sv+=parseFloat(b.value)*q;sq+=q;});avgPrice=Math.round(sv/sq).toLocaleString('fr-FR')+' €';}
-  const ws=weekStart();
-  const sortiesSem=cave.history.filter(h=>new Date(h.date)>=ws).reduce((s,h)=>s+(h.quantity||0),0);
-
-  const card=(title,html)=>`<div class="stats-sec"><div class="stats-sec-title">${title}</div>${html}</div>`;
-  const pieCard=(title,data,colors)=>`
-    <div class="stats-sec" style="display:flex;flex-direction:column">
-      <div class="stats-sec-title">${title}</div>
-      <div style="display:flex;align-items:center;gap:12px;flex:1">
-        ${pie(data,colors,120)}
-        <div style="flex:1;min-width:0">${pieLegend(data,colors,data.reduce((s,d)=>s+d.v,0))}</div>
-      </div>
-    </div>`;
-
-  el.innerHTML=`
-    <!-- Chiffres clés -->
-    <div class="stat-grid" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
-      <div class="stat-card"><div class="stat-lbl">Total</div><div class="stat-val">${t}</div><div class="stat-sub">bouteilles</div></div>
-      <div class="stat-card"><div class="stat-lbl">Valeur totale</div><div class="stat-val">${Math.round(v).toLocaleString('fr-FR')}</div><div class="stat-sub">euros</div></div>
-      <div class="stat-card"><div class="stat-lbl">Prix moyen / btl</div><div class="stat-val" style="font-size:18px">${avgPrice}</div><div class="stat-sub">pondéré</div></div>
-      <div class="stat-card"><div class="stat-lbl">Sorties semaine</div><div class="stat-val">${sortiesSem}</div><div class="stat-sub">depuis lundi 00h01</div></div>
-      <div class="stat-card"><div class="stat-lbl">Producteurs</div><div class="stat-val">${new Set(cave.bottles.map(b=>b.producer)).size}</div><div class="stat-sub">distincts</div></div>
-    </div>
-
-    <!-- Ligne 1 : 3 camemberts -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
-      ${pieCard('Répartition par couleur', colData, colColors)}
-      ${pieCard('Blancs par région', blancRegs, regColors)}
-      ${pieCard('Rouges par région', rougeRegs, regColors)}
-    </div>
-
-    <!-- Ligne 2 : millésime + apogée -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-      ${card('Bouteilles par millésime', histo(vintData,'var(--bordeaux)'))}
-      ${card('Fin d’apéogée', histoPeak(peakData, peakColor))}
-    </div>
-
-    <!-- Ligne 3 : sorties/semaine + prix -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      ${card('Sorties par semaine (10 dernières)', histo(weeksData,'#4a7c59',d=>weeksData.find(w=>w.k===d)?.label||d))}
-      ${card('Bouteilles par tranche de prix', histo(prixData,'var(--gold)'))}
-    </div>`;
+  var getWK=function(ds){var d=new Date(ds);var dy=d.getDay();var df=dy===0?-6:1-dy;d.setDate(d.getDate()+df);d.setHours(0,0,0,0);return d.toISOString().slice(0,10);};
+  cave.history.forEach(function(h){if(!h.date)return;var wk=getWK(h.date);bweeks[wk]=(bweeks[wk]||0)+(h.quantity||0);});
+  var weeksData=[];
+  for(var i=9;i>=0;i--){var wd=new Date();var wdy=wd.getDay();var wdf=wdy===0?-6:1-wdy;wd.setDate(wd.getDate()+wdf-i*7);wd.setHours(0,0,0,0);var wk=wd.toISOString().slice(0,10);weeksData.push({k:wk,v:bweeks[wk]||0,label:'S'+(i===0?'(cur)':'-'+i)});}
+  var colColors=['var(--red)','#c8a84c','var(--rose)'];
+  var regColors=['#6b1f2a','#c9a84c','#4a7c59','#2c5f8a','#8b4513','#6b4c8a','#2e7d6b','#a0522d','#4682b4','#b8860b','#556b2f','#8b008b'];
+  var colData=[{k:'Rouge',v:bc.rouge},{k:'Blanc',v:bc.blanc},{k:'Rosé',v:bc.rose}];
+  var blancRegs=Object.entries(brBlanc).sort(function(a,b){return b[1]-a[1];}).slice(0,10).map(function(e){return{k:e[0],v:e[1]};});
+  var rougeRegs=Object.entries(brRouge).sort(function(a,b){return b[1]-a[1];}).slice(0,10).map(function(e){return{k:e[0],v:e[1]};});
+  var vintData=Object.keys(bvint).sort().map(function(k){return{k:k,v:bvint[k]};});
+  var peakData=Object.keys(bpeak).sort().map(function(k){return{k:k,v:bpeak[k]};});
+  var peakColor=function(k){var n=parseInt(k);if(n<y)return '#c0392b';if(n<=y+1)return '#2e7d32';if(n<=y+4)return 'var(--gold)';return 'var(--bordeaux)';};
+  var prixData=Object.entries(bprix).map(function(e){return{k:e[0],v:e[1]};});
+  var bwv2=cave.bottles.filter(function(b){return b.value&&parseInt(b.quantity)>0;});
+  var avgPrice='—';
+  if(bwv2.length){var sv=0,sq=0;bwv2.forEach(function(b){var q2=parseInt(b.quantity)||1;sv+=parseFloat(b.value)*q2;sq+=q2;});avgPrice=Math.round(sv/sq).toLocaleString('fr-FR')+' €';}
+  var ws2=weekStart();
+  var sortiesSem=cave.history.filter(function(h){return new Date(h.date)>=ws2;}).reduce(function(s,h){return s+(h.quantity||0);},0);
+  var card=function(ti,ht){return '<div class="stats-sec"><div class="stats-sec-title">'+ti+'</div>'+ht+'</div>';};
+  var pieCard=function(ti,data,colors){return '<div class="stats-sec" style="display:flex;flex-direction:column"><div class="stats-sec-title">'+ti+'</div><div style="display:flex;align-items:center;gap:12px;flex:1">'+pie(data,colors,120)+'<div style="flex:1;min-width:0">'+pieLegend(data,colors,data.reduce(function(s,d){return s+d.v;},0))+'</div></div></div>';};
+  var wlf=function(k){var w=weeksData.find(function(x){return x.k===k;});return w?w.label:k;};
+  el.innerHTML=''
+    +'<div class="stat-grid" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">'
+    +'<div class="stat-card"><div class="stat-lbl">Total</div><div class="stat-val">'+t+'</div><div class="stat-sub">bouteilles</div></div>'
+    +'<div class="stat-card"><div class="stat-lbl">Valeur totale</div><div class="stat-val">'+Math.round(v).toLocaleString('fr-FR')+'</div><div class="stat-sub">euros</div></div>'
+    +'<div class="stat-card"><div class="stat-lbl">Prix moyen / btl</div><div class="stat-val" style="font-size:18px">'+avgPrice+'</div><div class="stat-sub">pondéré</div></div>'
+    +'<div class="stat-card"><div class="stat-lbl">Sorties semaine</div><div class="stat-val">'+sortiesSem+'</div><div class="stat-sub">depuis lundi 00h01</div></div>'
+    +'<div class="stat-card"><div class="stat-lbl">Producteurs</div><div class="stat-val">'+new Set(cave.bottles.map(function(b){return b.producer;})).size+'</div><div class="stat-sub">distincts</div></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">'
+    +pieCard('Répartition par couleur',colData,colColors)
+    +pieCard('Blancs par région',blancRegs,regColors)
+    +pieCard('Rouges par région',rougeRegs,regColors)
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
+    +card('Bouteilles par millésime',histo(vintData,'var(--bordeaux)'))
+    +card('Fin d’apogée',histoPeak(peakData,peakColor))
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +card('Sorties par semaine (10 dernières)',histo(weeksData,'#4a7c59',wlf))
+    +card('Bouteilles par tranche de prix',histo(prixData,'var(--gold)'))
+    +'</div>';
 }
 
 /* ── API KEY ── */
