@@ -1044,10 +1044,11 @@ Format : {"vintage":null,"value":null,"peakStart":null,"peakEnd":null}`;
         toast('Gemini ' + r2.status + ' : ' + errMsg, true);
       } else {
         const t2 = d2?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        toast('Gemini brut : ' + t2.slice(0,120), false); // DEBUG — à retirer
         if (!t2) {
           toast('Gemini : réponse vide — ' + JSON.stringify(d2).slice(0,100), true);
         } else {
-          const m2 = t2.match(/\{[\s\S]*?\}/);
+          const m2 = t2.match(/\{[\s\S]*\}/);
           if (m2) {
             const g = JSON.parse(m2[0]);
             if(!vintageKnown && g.vintage) {
