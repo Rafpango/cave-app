@@ -571,12 +571,12 @@ const fEur = n => n ? Math.round(n).toLocaleString('fr-FR') + ' €' : '—';
 const gv   = id => document.getElementById(id).value.trim();
 
 function mat(b) {
-  if (!b.peakStart && !b.peakEnd) return { c:'m-na', l:'—' };
+  if (!b.peakEnd) return { c:'m-na', l:'—' };
   const y = new Date().getFullYear();
-  if (b.peakStart && y < b.peakStart) return { c:'m-wt', l:'Attendre' };
-  if (b.peakEnd   && y > b.peakEnd)   return { c:'m-dk', l:'À boire !' };
-  if (b.peakEnd   && (b.peakEnd - y) < 1) return { c:'m-soon', l:'Bientôt' };
-  return { c:'m-rdy', l:'Prêt' };
+  if (b.peakEnd < y)          return { c:'m-dk',   l:'En retard' };
+  if (b.peakEnd <= y + 1)     return { c:'m-rdy',  l:'À boire !' };
+  if (b.peakEnd <= y + 4)     return { c:'m-soon', l:'Peut attendre' };
+  return                             { c:'m-wt',   l:'Attendre' };
 }
 const totBtl = () => cave.bottles.reduce((s,b) => s + (parseInt(b.quantity)||0), 0);
 const totVal = () => cave.bottles.reduce((s,b) => s + (parseFloat(b.value)||0) * (parseInt(b.quantity)||0), 0);
@@ -951,9 +951,9 @@ function doUpload() { document.getElementById('inp-upload').click(); }
 async function onPhoto(event) {
   const file = event.target.files[0]; if (!file) return;
 
-
   document.getElementById('p-pick').style.display = 'none';
   document.getElementById('p-load').style.display = 'block';
+  document.querySelector('#p-load .ai-txt').textContent = 'Claude analyse l\'étiquette…';
 
   try {
     const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
@@ -961,36 +961,47 @@ async function onPhoto(event) {
 
     const REGIONS = ['Alsace','Argentine','Auvergne','Beaujolais','Bordeaux','Bourgogne','Champagne','Espagne','Italie','Languedoc','Loire','Provence','Rhône','Savoie','Sud-Ouest'];
 
-    // ── ÉTAPE 1 : Claude lit l'étiquette (pas de web_search → pas de 429) ──
-    document.querySelector('#p-load .ai-txt').textContent = 'Claude lit l\'étiquette…';
+    const prompt = `Tu es un sommelier expert. Analyse cette étiquette de vin, effectue une recherche web pour trouver le prix moyen actuel, et extrais toutes les données.
 
-    const promptClaude = `Tu es un sommelier expert. Analyse cette étiquette et extrais les données visuelles.
+── RÉGION ──
+Choisis EXACTEMENT dans cette liste : ${REGIONS.join(', ')}. null si aucune ne convient.
 
-RÉGION : choisis EXACTEMENT dans cette liste : ${REGIONS.join(', ')}. null si aucune ne convient.
-ALCOOL : lis sur l'étiquette si visible, sinon estime. null si impossible.
+── DEGRÉ D'ALCOOL ──
+Lis sur l'étiquette si visible, sinon estime selon appellation/cépage. null si impossible.
+
+── PRIX MOYEN ──
+Recherche le prix actuel sur Wine Searcher, iDealwine ou Vinatis. Entier en euros, null si introuvable.
+
+── APOGÉE ──
+Estime de façon RÉALISTE et AMBITIEUSE (pas conservatrice). Base-toi sur les guides des grands millésimes et les critiques (Parker, Bettane, RVF). N'hésite pas à donner des fenêtres longues pour les grands vins.
+Exemples : Pauillac top château 2016 → 2026-2045 ; Bourgogne GC 2019 → 2027-2042 ; Sancerre 2022 → 2024-2028 ; Champagne NM → 2024-2032 ; Provence rosé 2023 → 2024-2026 ; Côtes du Rhône 2021 → 2024-2028.
 
 Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks.
-Format : {"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","abv":null}`;
+Format : {"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","abv":null,"value":null,"peakStart":null,"peakEnd":null}
+null pour les champs non identifiables.`;
 
-    const r1 = await fetch('/.netlify/functions/claude', {
+    const resp = await fetch('/.netlify/functions/claude', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        model: AI_MODEL, max_tokens: 512,
+        model: AI_MODEL,
+        max_tokens: 2048,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: [
           { type: 'image', source: { type: 'base64', media_type: mtype, data: base64 } },
-          { type: 'text', text: promptClaude }
+          { type: 'text', text: prompt }
         ]}]
       })
     });
-    if (!r1.ok) throw new Error(`Claude ${r1.status} — ${(await r1.text()).slice(0,200)}`);
-    const d1 = await r1.json();
-    const t1 = (d1.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
-    const m1 = t1.match(/\{[\s\S]*?\}/);
-    if (!m1) throw new Error('Claude n\'a pas retourné de JSON valide');
-    const p = JSON.parse(m1[0]);
 
-    // Remplir immédiatement les champs lus sur l'étiquette
+    if (!resp.ok) throw new Error(`Claude ${resp.status} — ${(await resp.text()).slice(0,200)}`);
+
+    const data = await resp.json();
+    const allText = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+    const jsonMatch = allText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Aucun JSON dans la réponse Claude');
+    const p = JSON.parse(jsonMatch[0]);
+
     if(p.producer)    document.getElementById('f-producer').value    = p.producer;
     if(p.cuvee)       document.getElementById('f-cuvee').value        = p.cuvee;
     if(p.region && REGIONS.includes(p.region)) document.getElementById('f-region').value = p.region;
@@ -998,70 +1009,14 @@ Format : {"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|b
     if(p.vintage)     document.getElementById('f-vintage').value      = p.vintage;
     if(p.grapes)      document.getElementById('f-grapes').value       = p.grapes;
     if(p.abv)         document.getElementById('f-abv').value          = p.abv;
+    if(p.value)       document.getElementById('f-value').value        = p.value;
+    if(p.peakStart)   document.getElementById('f-ps').value           = p.peakStart;
+    if(p.peakEnd)     document.getElementById('f-pe').value           = p.peakEnd;
     if(p.color   && ['rouge','blanc','rose'].includes(p.color))           setTGL('tgl-color', p.color);
     if(p.format  && ['bouteille','magnum','jeroboam'].includes(p.format)) setTGL('tgl-format', p.format);
     else setTGL('tgl-format','bouteille');
     setTGL('tgl-loc','grande');
     document.getElementById('f-qty').value = 1;
-
-    // ── ÉTAPE 2 : Gemini enrichit avec prix + apogée réaliste (non bloquant) ──
-    document.querySelector('#p-load .ai-txt').textContent = 'Gemini recherche le prix et l\'apogée…';
-    toast('→ Appel Gemini en cours…'); // DEBUG
-
-    const vintageKnown = !!p.vintage;
-    const wineDesc = [p.producer, p.cuvee, p.appellation, p.vintage, p.grapes, p.color].filter(Boolean).join(', ');
-    const promptGemini = `Tu es un sommelier expert avec accès à Google Search.
-
-Vin : ${wineDesc}
-${!vintageKnown ? `
-MILLÉSIME INCONNU : Le millésime n'a pas pu être lu sur l'étiquette.
-Recherche sur Google quel est le dernier millésime commercialisé de ce vin, ou le millésime le plus probable actuellement en vente. Retourne-le dans "vintage" (entier à 4 chiffres). Si vraiment impossible, mets null.
-` : ''}
-1. PRIX MOYEN : Recherche le prix actuel sur Wine Searcher, iDealwine, Vinatis ou Millesima. Retourne un entier en euros, null si introuvable.
-
-2. APOGÉE RÉALISTE : Estime la fenêtre d'apogée de façon réaliste et ambitieuse (pas conservatrice). Appuie-toi sur les guides des grands millésimes et les avis des critiques (Parker, Bettane, RVF).
-Année actuelle : ${new Date().getFullYear()}.
-Exemples : Pauillac top château 2016 → 2026-2045 ; Bourgogne Grand Cru 2019 → 2027-2042 ; Sancerre 2022 → 2024-2028 ; Champagne NM → 2024-2032 ; Provence rosé 2023 → 2024-2026.
-
-Réponds UNIQUEMENT avec un JSON, sans markdown, sans backticks.
-Format : {"vintage":null,"value":null,"peakStart":null,"peakEnd":null}`;
-
-    try {
-      const r2 = await fetch('/.netlify/functions/gemini', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          model: 'gemini-1.5-flash',
-          payload: {
-            contents: [{ parts: [{ text: promptGemini }] }],
-            generationConfig: { temperature: 0.2, maxOutputTokens: 256 }
-          }
-        })
-      });
-      const rawText = await r2.text();
-      toast('G:' + r2.status + ' ' + rawText.slice(0,120), !r2.ok);
-      if (r2.ok) {
-        try {
-          const d2 = JSON.parse(rawText);
-          const t2 = d2?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          const m2 = t2.match(/\{[\s\S]*\}/);
-          if (m2) {
-            const g = JSON.parse(m2[0]);
-            if(!vintageKnown && g.vintage) {
-              document.getElementById('f-vintage').value = g.vintage;
-              document.getElementById('f-vintage').style.borderColor = 'var(--gold)';
-            }
-            if(g.value)     document.getElementById('f-value').value    = g.value;
-            if(g.peakStart) document.getElementById('f-ps').value       = g.peakStart;
-            if(g.peakEnd)   document.getElementById('f-pe').value       = g.peakEnd;
-          }
-        } catch(parseErr) {
-          toast('G parse err: ' + parseErr.message, true);
-        }
-      }
-    } catch(geminiErr) {
-      toast('G catch: ' + (geminiErr.message||String(geminiErr)), true);
-    }
 
     document.getElementById('photo-preview').src = `data:${mtype};base64,${base64}`;
     document.getElementById('p-load').style.display = 'none';
