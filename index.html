@@ -1006,6 +1006,7 @@ Format : {"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|b
 
     // ── ÉTAPE 2 : Gemini enrichit avec prix + apogée réaliste (non bloquant) ──
     document.querySelector('#p-load .ai-txt').textContent = 'Gemini recherche le prix et l\'apogée…';
+    toast('→ Appel Gemini en cours…'); // DEBUG
 
     const vintageKnown = !!p.vintage;
     const wineDesc = [p.producer, p.cuvee, p.appellation, p.vintage, p.grapes, p.color].filter(Boolean).join(', ');
@@ -1064,7 +1065,7 @@ Format : {"vintage":null,"value":null,"peakStart":null,"peakEnd":null}`;
         }
       }
     } catch(geminiErr) {
-      toast('Gemini erreur réseau : ' + geminiErr.message, true);
+      toast('Gemini catch : ' + (geminiErr.message||String(geminiErr)), true);
     }
 
     document.getElementById('photo-preview').src = `data:${mtype};base64,${base64}`;
