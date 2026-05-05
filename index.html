@@ -1037,25 +1037,33 @@ Format : {"vintage":null,"value":null,"peakStart":null,"peakEnd":null}`;
           }
         })
       });
-      if (r2.ok) {
-        const d2 = await r2.json();
+      const d2 = await r2.json();
+      if (!r2.ok) {
+        // Affiche le détail de l'erreur Gemini directement en toast
+        const errMsg = d2?.error?.message || d2?.error || JSON.stringify(d2).slice(0,120);
+        toast('Gemini ' + r2.status + ' : ' + errMsg, true);
+      } else {
         const t2 = d2?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        const m2 = t2.match(/\{[\s\S]*?\}/);
-        if (m2) {
-          const g = JSON.parse(m2[0]);
-          // Millésime estimé par Gemini si absent
-          if(!vintageKnown && g.vintage) {
-            document.getElementById('f-vintage').value = g.vintage;
-            document.getElementById('f-vintage').title = 'Millésime estimé par Gemini';
-            document.getElementById('f-vintage').style.borderColor = 'var(--gold)';
+        if (!t2) {
+          toast('Gemini : réponse vide — ' + JSON.stringify(d2).slice(0,100), true);
+        } else {
+          const m2 = t2.match(/\{[\s\S]*?\}/);
+          if (m2) {
+            const g = JSON.parse(m2[0]);
+            if(!vintageKnown && g.vintage) {
+              document.getElementById('f-vintage').value = g.vintage;
+              document.getElementById('f-vintage').style.borderColor = 'var(--gold)';
+            }
+            if(g.value)     document.getElementById('f-value').value    = g.value;
+            if(g.peakStart) document.getElementById('f-ps').value       = g.peakStart;
+            if(g.peakEnd)   document.getElementById('f-pe').value       = g.peakEnd;
+          } else {
+            toast('Gemini : JSON introuvable dans — ' + t2.slice(0,80), true);
           }
-          if(g.value)     document.getElementById('f-value').value    = g.value;
-          if(g.peakStart) document.getElementById('f-ps').value       = g.peakStart;
-          if(g.peakEnd)   document.getElementById('f-pe').value       = g.peakEnd;
         }
       }
     } catch(geminiErr) {
-      console.warn('[Gemini skipped]', geminiErr);
+      toast('Gemini erreur réseau : ' + geminiErr.message, true);
     }
 
     document.getElementById('photo-preview').src = `data:${mtype};base64,${base64}`;
