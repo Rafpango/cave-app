@@ -1031,7 +1031,7 @@ Format : {"vintage":null,"value":null,"peakStart":null,"peakEnd":null}`;
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          model: 'gemini-2.0-flash',
+          model: 'gemini-1.5-flash',
           payload: {
             contents: [{ parts: [{ text: promptGemini }] }],
             generationConfig: { temperature: 0.2, maxOutputTokens: 256 }
