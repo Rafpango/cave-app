@@ -1200,7 +1200,7 @@ function pieLegend(data, colors, total) {
 function histo(data, color='var(--bordeaux)', labelFn=k=>k) {
   if (!data.length) return '<div style="font-size:10px;color:var(--muted)">Aucune donnée</div>';
   const max = Math.max(...data.map(d=>d.v));
-  return `<div style="display:flex;align-items:flex-end;gap:3px;height:90px;padding-bottom:20px;position:relative">` +
+  return `<div style="display:flex;align-items:flex-end;gap:3px;height:270px;padding-bottom:20px;position:relative">` +
     data.map(d=>{
       const h = max ? Math.round((d.v/max)*70) : 0;
       return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">
@@ -1214,9 +1214,9 @@ function histo(data, color='var(--bordeaux)', labelFn=k=>k) {
 function histoPeak(data, colorFn) {
   if (!data.length) return '<div style="font-size:10px;color:var(--muted)">Aucune donnée</div>';
   const max = Math.max(...data.map(d=>d.v));
-  let html = '<div style="display:flex;align-items:flex-end;gap:3px;height:90px;padding-bottom:20px">';
+  let html = '<div style="display:flex;align-items:flex-end;gap:3px;height:270px;padding-bottom:20px">';
   data.forEach(d=>{
-    const h = max ? Math.round((d.v/max)*70) : 0;
+    const h = max ? Math.round((d.v/max)*240) : 0;
     html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">'
       + '<span style="font-size:7px;color:var(--muted)">' + (d.v||'') + '</span>'
       + '<div style="width:100%;height:'+h+'px;background:'+colorFn(d.k)+';min-height:'+(d.v?2:0)+'px" title="'+d.k+': '+d.v+'"></div>'
