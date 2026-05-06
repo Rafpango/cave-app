@@ -38,11 +38,11 @@
     #login-error { margin-top: 12px; font-size: 11px; color: #c0392b; text-align: center; display: none; }
 
     /* ── TOPBAR ── */
-    #topbar { background: var(--ink); border-bottom: 1px solid rgba(201,168,76,.2); padding: 0 16px; position: sticky; top: 0; z-index: 90; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; min-height: 52px; }
+    #topbar { background: var(--ink); border-bottom: 1px solid rgba(201,168,76,.2); padding: 0 12px; position: sticky; top: 0; z-index: 90; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px; min-height: 52px; }
     .topbar-logo { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 300; color: var(--gold); cursor: pointer; white-space: nowrap; }
     .topbar-logo em { font-style: italic; }
-    .topbar-nav { display: flex; flex: 1; justify-content: center; flex-wrap: wrap; }
-    .topbar-nav button { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: color .15s; }
+    .topbar-nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 0; }
+    .topbar-nav button { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; padding: 6px 8px; cursor: pointer; white-space: nowrap; transition: color .15s; }
     .topbar-nav button:hover { color: var(--gold); }
     .topbar-nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
     .topbar-info { font-size: 9px; color: var(--muted); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
@@ -233,12 +233,34 @@
     #toast.err  { border-left-color: #c0392b; }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 700px) {
+    @media (max-width: 600px) {
+      #topbar { grid-template-columns: 1fr auto; grid-template-rows: auto auto; padding: 6px 10px; gap: 0; }
+      .topbar-logo { grid-column: 1; grid-row: 1; font-size: 15px; }
+      .topbar-info { grid-column: 2; grid-row: 1; }
+      .topbar-nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; border-top: 1px solid rgba(201,168,76,.1); padding-top: 2px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      .topbar-nav::-webkit-scrollbar { display: none; }
+      .topbar-nav button { padding: 5px 8px; font-size: 8px; flex-shrink: 0; }
+      #app-body { min-height: calc(100vh - 80px); }
       #sidebar { display: none; }
+      #main { padding: 10px; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
       .fgrid { grid-template-columns: 1fr; }
       .dgrid { grid-template-columns: 1fr; }
       .rcard-body { flex-direction: column; }
       .rcard-info { border-right: none; border-bottom: 1px solid var(--border); }
+      .mbox { max-height: 96vh; border-radius: 12px 12px 0 0; }
+      .mbody { padding: 14px; }
+      .toolbar { flex-wrap: wrap; }
+      .table-wrap { font-size: 10px; }
+      .wine-table th, .wine-table td { padding: 7px 6px; }
+      .stats-sec { padding: 10px; }
+      div[style*="grid-template-columns:repeat(3"] { grid-template-columns: 1fr !important; }
+      div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+    }
+    @media (min-width: 601px) and (max-width: 900px) {
+      #sidebar { display: none; }
+      .stat-grid { grid-template-columns: repeat(3, 1fr) !important; }
+      div[style*="grid-template-columns:repeat(3"] { grid-template-columns: repeat(2,1fr) !important; }
     }
     @media (min-width: 900px) {
       .stat-grid { grid-template-columns: repeat(6, 1fr); }
@@ -576,7 +598,7 @@ let auth = { token: null, gistId: null };
 let cave = { bottles: [], history: [] };
 let ui   = {
   currentId: null, editingId: null,
-  filters: { color: null, region: null, maturity: null, location: null },
+  filters: { color: null, region: null, maturity: null, location: null, vintage: null },
   sort: { field: 'producer', dir: 'asc' },
   online: navigator.onLine, pendingPush: false
 };
@@ -753,14 +775,16 @@ function renderStatGrid() {
 }
 
 function renderSidebar() {
-  const cc={}, lc={}, rc={}, mc={'m-rdy':0,'m-soon':0,'m-wt':0,'m-dk':0};
+  const cc={}, rc={}, vc={}, mc={'m-rdy':0,'m-soon':0,'m-wt':0,'m-dk':0};
   cave.bottles.forEach(b => {
     const q=parseInt(b.quantity)||0;
-    cc[b.color]=(cc[b.color]||0)+q; lc[b.location]=(lc[b.location]||0)+q;
+    cc[b.color]=(cc[b.color]||0)+q;
     rc[(b.region||'—')]=(rc[(b.region||'—')]||0)+q;
+    if(b.vintage) vc[b.vintage]=(vc[b.vintage]||0)+q;
     const m=mat(b).c; if(mc[m]!==undefined) mc[m]+=q;
   });
-  const regs = Object.entries(rc).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  const regs = Object.entries(rc).sort((a,b)=>b[1]-a[1]); // toutes les régions
+  const vints = Object.keys(vc).map(Number).sort((a,b)=>b-a); // millésimes décroissants
   const cdot = { rouge:'var(--red)', blanc:'#c8a84c', rose:'var(--rose)' };
   document.getElementById('sidebar').innerHTML = `
     <div class="sb-section"><div class="sb-title">Couleur</div><div class="sb-chips">
@@ -769,19 +793,19 @@ function renderSidebar() {
     <div class="sb-section"><div class="sb-title">Région</div><div class="sb-chips">
       ${regs.length?regs.map(([r,c])=>`<button class="chip ${ui.filters.region===r?'on':''}" onclick='setF("region",${JSON.stringify(r)})'><span>${esc(r)}</span><span style="font-size:8px;opacity:.6">${c}</span></button>`).join(''):'<span style="font-size:9px;color:var(--muted)">Aucune</span>'}
     </div></div>
-    <div class="sb-section"><div class="sb-title">Maturité</div><div class="sb-chips">
-      <button class="chip ${ui.filters.maturity==='m-rdy'?'on':''}" onclick="setF('maturity','m-rdy')">Prêt <span style="font-size:8px;opacity:.6">${mc['m-rdy']}</span></button>
-      <button class="chip ${ui.filters.maturity==='m-soon'?'on':''}" onclick="setF('maturity','m-soon')">Bientôt <span style="font-size:8px;opacity:.6">${mc['m-soon']}</span></button>
-      <button class="chip ${ui.filters.maturity==='m-wt'?'on':''}"  onclick="setF('maturity','m-wt')">Attendre <span style="font-size:8px;opacity:.6">${mc['m-wt']}</span></button>
-      <button class="chip ${ui.filters.maturity==='m-dk'?'on':''}"  onclick="setF('maturity','m-dk')">À boire ! <span style="font-size:8px;opacity:.6">${mc['m-dk']}</span></button>
+    <div class="sb-section"><div class="sb-title">Millésime</div><div class="sb-chips">
+      ${vints.length?vints.map(v=>`<button class="chip ${ui.filters.vintage===v?'on':''}" onclick="setF('vintage',${v})"><span>${v}</span><span style="font-size:8px;opacity:.6">${vc[v]}</span></button>`).join(''):'<span style="font-size:9px;color:var(--muted)">Aucun</span>'}
     </div></div>
-    <div class="sb-section"><div class="sb-title">Emplacement</div><div class="sb-chips">
-      ${['grande','petite','autre'].map(l=>`<button class="chip ${ui.filters.location===l?'on':''}" onclick="setF('location','${l}')">${LOC[l]} <span style="font-size:8px;opacity:.6">${lc[l]||0}</span></button>`).join('')}
+    <div class="sb-section"><div class="sb-title">Maturité</div><div class="sb-chips">
+      <button class="chip ${ui.filters.maturity==='m-rdy'?'on':''}" onclick="setF('maturity','m-rdy')">À boire ! <span style="font-size:8px;opacity:.6">${mc['m-rdy']}</span></button>
+      <button class="chip ${ui.filters.maturity==='m-soon'?'on':''}" onclick="setF('maturity','m-soon')">Peut attendre <span style="font-size:8px;opacity:.6">${mc['m-soon']}</span></button>
+      <button class="chip ${ui.filters.maturity==='m-wt'?'on':''}"  onclick="setF('maturity','m-wt')">Attendre <span style="font-size:8px;opacity:.6">${mc['m-wt']}</span></button>
+      <button class="chip ${ui.filters.maturity==='m-dk'?'on':''}"  onclick="setF('maturity','m-dk')">En retard <span style="font-size:8px;opacity:.6">${mc['m-dk']}</span></button>
     </div></div>`;
 }
 
 function setF(k,v) { ui.filters[k]=ui.filters[k]===v?null:v; render(); }
-function resetFilters() { ui.filters={color:null,region:null,maturity:null,location:null}; document.getElementById('search-input').value=''; render(); }
+function resetFilters() { ui.filters={color:null,region:null,maturity:null,location:null,vintage:null}; document.getElementById('search-input').value=''; render(); }
 
 function getFiltered() {
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
@@ -790,6 +814,7 @@ function getFiltered() {
     if(ui.filters.location && b.location!==ui.filters.location) return false;
     if(ui.filters.region   && (b.region||'—')!==ui.filters.region) return false;
     if(ui.filters.maturity && mat(b).c!==ui.filters.maturity) return false;
+    if(ui.filters.vintage && b.vintage!==ui.filters.vintage) return false;
     if(q && ![b.producer,b.cuvee,b.appellation,b.region,b.grapes].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -1285,7 +1310,7 @@ function renderStats() {
   var pieCard=function(ti,data,colors){return '<div class="stats-sec" style="display:flex;flex-direction:column"><div class="stats-sec-title">'+ti+'</div><div style="display:flex;align-items:center;gap:12px;flex:1">'+pie(data,colors,120)+'<div style="flex:1;min-width:0">'+pieLegend(data,colors,data.reduce(function(s,d){return s+d.v;},0))+'</div></div></div>';};
   var wlf=function(k){var w=weeksData.find(function(x){return x.k===k;});return w?w.label:k;};
   el.innerHTML=''
-    +'<div class="stat-grid" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">'
+    +'<div class="stat-grid" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">'
     +'<div class="stat-card"><div class="stat-lbl">Total</div><div class="stat-val">'+t+'</div><div class="stat-sub">bouteilles</div></div>'
     +'<div class="stat-card"><div class="stat-lbl">Valeur totale</div><div class="stat-val">'+Math.round(v).toLocaleString('fr-FR')+'</div><div class="stat-sub">euros</div></div>'
     +'<div class="stat-card"><div class="stat-lbl">Prix moyen / btl</div><div class="stat-val" style="font-size:18px">'+avgPrice+'</div><div class="stat-sub">pondéré</div></div>'
