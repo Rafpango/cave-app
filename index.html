@@ -22,7 +22,7 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'DM Mono', monospace; background: var(--cream); color: var(--ink); min-height: 100vh; -webkit-text-size-adjust: 100%; }
-    input, button { font-family: inherit; }
+    input, button, select, textarea { font-family: inherit; }
     .hidden { display: none !important; }
     .page { display: none; }
     .page.active { display: block; }
@@ -138,6 +138,7 @@
     .flbl.req::after { content: ' *'; color: var(--bordeaux); }
     .finput { background: #fff; border: 1px solid var(--border); padding: 9px 11px; font-size: 16px; outline: none; -webkit-appearance: none; border-radius: 0; width: 100%; transition: border-color .15s; }
     .finput:focus { border-color: var(--bordeaux); }
+    textarea.finput { font-family: 'DM Mono', monospace; font-size: 13px; min-height: 60px; resize: vertical; }
     .trow { display: flex; }
     .tgl { flex: 1; background: #fff; border: 1px solid var(--border); border-right: none; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .06em; padding: 10px 6px; cursor: pointer; text-align: center; transition: all .12s; }
     .tgl:last-child { border-right: 1px solid var(--border); }
@@ -171,6 +172,11 @@
 
     /* ── CONSUME ── */
     .cinfo { background: var(--parchment); border-left: 3px solid var(--gold); padding: 12px 14px; margin-bottom: 16px; font-size: 12px; }
+    .rating-row { display: flex; gap: 6px; }
+    .rate-btn { flex: 1; background: #fff; border: 1px solid var(--border); padding: 10px 6px; cursor: pointer; font-size: 18px; transition: all .12s; border-radius: 0; }
+    .rate-btn .rate-lbl { display: block; font-size: 8px; letter-spacing: .1em; color: var(--muted); margin-top: 3px; }
+    .rate-btn.on { background: var(--bordeaux); border-color: var(--bordeaux); color: #fff; }
+    .rate-btn.on .rate-lbl { color: rgba(255,255,255,.85); }
 
     /* ── IA PAGE ── */
     .ai-page { max-width: 800px; margin: 0 auto; }
@@ -182,9 +188,11 @@
     .reco-go { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 12px 18px; background: var(--bordeaux); color: #fff; border: none; cursor: pointer; transition: background .15s; }
     .reco-go:hover:not(:disabled) { background: var(--bx2); }
     .reco-go:disabled { opacity: .6; cursor: default; }
-    .reco-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
+    .reco-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
     .reco-chip { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; padding: 5px 12px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all .12s; }
     .reco-chip:hover { border-color: var(--bordeaux); color: var(--bordeaux); }
+    .reco-context { background: var(--parchment); border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 10px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+    .reco-context strong { color: var(--ink); }
     .rcard { background: #fff; border: 1px solid var(--border); margin-bottom: 12px; }
     .rcard-hdr { padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.85); }
     .rcard-hdr.main { background: var(--bordeaux); }
@@ -200,6 +208,8 @@
     .rcard-why-txt { font-family: 'Cormorant Garamond', serif; font-size: 14px; line-height: 1.6; font-style: italic; }
     .rcard-foot { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .rcard-stock { font-size: 10px; color: var(--muted); }
+    .reco-analysis { background: #fff; border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 12px; font-family: 'Cormorant Garamond', serif; font-size: 13px; font-style: italic; color: var(--muted); line-height: 1.6; border-left: 3px solid var(--gold); }
+    .reco-analysis strong { color: var(--ink); font-style: normal; font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .16em; text-transform: uppercase; display: block; margin-bottom: 6px; }
 
     /* ── HISTORY ── */
     .hist-item { background: #fff; border: 1px solid var(--border); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -209,6 +219,7 @@
     .hist-meta { font-size: 9px; color: var(--muted); margin-top: 2px; }
     .hist-occ  { font-size: 10px; font-style: italic; color: var(--muted); }
     .hist-qty  { font-size: 10px; background: var(--parchment); padding: 3px 8px; border: 1px solid var(--border); flex-shrink: 0; }
+    .hist-rate { font-size: 14px; flex-shrink: 0; }
 
     /* ── STATS ── */
     .stats-sec { background: #fff; border: 1px solid var(--border); padding: 16px; margin-bottom: 14px; }
@@ -366,6 +377,7 @@
             <span class="reco-chip" onclick="setQ('Grande occasion, budget libre')">Grande occasion</span>
             <span class="reco-chip" onclick="setQ('Poisson en sauce')">Poisson</span>
           </div>
+          <div id="reco-context-banner"></div>
           <div id="reco-results"></div>
         </div>
       </div>
@@ -391,6 +403,51 @@
     <div id="page-settings" class="page" style="flex:1">
       <div id="main">
         <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:26px;margin-bottom:16px">Réglages</h2>
+
+        <div class="scard">
+          <div class="scard-title">✦ Profil sommelier</div>
+          <div class="scard-desc">
+            Ces préférences guident l'IA dans ses recommandations. Plus tu es précis, meilleurs seront les choix.<br>
+            <em>Toutes les options sont facultatives.</em>
+          </div>
+          <div class="fgrid" style="gap:14px">
+            <div class="fg frow">
+              <label class="flbl">Style général préféré</label>
+              <textarea class="finput" id="pref-style" rows="2" placeholder="Ex : Vins sur la fraîcheur, peu boisés. J'aime les rouges légers et les blancs minéraux."></textarea>
+            </div>
+            <div class="fg">
+              <label class="flbl">Régions favorites</label>
+              <input class="finput" id="pref-regions" placeholder="Ex : Bourgogne, Loire, Rhône Nord">
+            </div>
+            <div class="fg">
+              <label class="flbl">Régions à éviter</label>
+              <input class="finput" id="pref-regions-avoid" placeholder="Ex : Bordeaux trop tannique">
+            </div>
+            <div class="fg">
+              <label class="flbl">Cépages aimés</label>
+              <input class="finput" id="pref-grapes" placeholder="Ex : Pinot Noir, Riesling, Syrah">
+            </div>
+            <div class="fg">
+              <label class="flbl">Cépages détestés</label>
+              <input class="finput" id="pref-grapes-avoid" placeholder="Ex : Chardonnay boisé">
+            </div>
+            <div class="fg">
+              <label class="flbl">Budget « quotidien » (€)</label>
+              <input class="finput" type="number" id="pref-budget-daily" placeholder="20" min="0">
+            </div>
+            <div class="fg">
+              <label class="flbl">Seuil « grande occasion » (€)</label>
+              <input class="finput" type="number" id="pref-budget-special" placeholder="80" min="0">
+            </div>
+            <div class="fg frow">
+              <label class="flbl">Notes libres pour l'IA</label>
+              <textarea class="finput" id="pref-notes" rows="2" placeholder="Ex : Ma femme préfère les vins tendres. J'évite les vins trop alcooleux le soir."></textarea>
+            </div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn-prim" onclick="savePrefs()">Enregistrer le profil</button>
+          </div>
+        </div>
 
         <div class="scard">
           <div class="scard-title">IA Claude <span style="font-size:10px;color:#2e7d32">✓ Active</span></div>
@@ -569,7 +626,16 @@
       <div class="cinfo" id="cinfo"></div>
       <div class="fg" style="margin-bottom:12px"><label class="flbl">Quantité</label><input class="finput" type="number" id="c-qty" value="1" min="1"></div>
       <div class="fg" style="margin-bottom:12px"><label class="flbl">Date</label><input class="finput" type="date" id="c-date"></div>
-      <div class="fg"><label class="flbl">Occasion (optionnel)</label><input class="finput" type="text" id="c-occ" placeholder="ex. Dîner avec des amis"></div>
+      <div class="fg" style="margin-bottom:12px"><label class="flbl">Occasion (optionnel)</label><input class="finput" type="text" id="c-occ" placeholder="ex. Dîner avec des amis"></div>
+      <div class="fg">
+        <label class="flbl">Note de dégustation (optionnel)</label>
+        <div class="rating-row" id="rate-row">
+          <button type="button" class="rate-btn" data-val="-1">👎<span class="rate-lbl">Décevant</span></button>
+          <button type="button" class="rate-btn" data-val="0">😐<span class="rate-lbl">Correct</span></button>
+          <button type="button" class="rate-btn" data-val="1">👍<span class="rate-lbl">Bon</span></button>
+          <button type="button" class="rate-btn" data-val="2">⭐<span class="rate-lbl">Excellent</span></button>
+        </div>
+      </div>
     </div>
     <div class="mfoot">
       <button class="btn btn-ghost" onclick="closeM('m-consume')">Annuler</button>
@@ -586,21 +652,22 @@
 /* ── CONSTANTES ── */
 const LS_AUTH  = 'cave-auth-v1';
 const LS_CACHE = 'cave-cache-v1';
-/* Modèle Claude — utilise l'API Anthropic standard */
 const AI_MODEL = 'claude-haiku-4-5';
 
 const FMT = { bouteille:'Bouteille', magnum:'Magnum', jeroboam:'Jéroboam' };
 const COL = { rouge:'Rouge', blanc:'Blanc', rose:'Rosé' };
 const LOC = { grande:'Grande armoire', petite:'Petite armoire', autre:'Autre' };
+const RATE_LBL = { '-1':'👎 décevant', '0':'😐 correct', '1':'👍 bon', '2':'⭐ excellent' };
 
 /* ── STATE ── */
 let auth = { token: null, gistId: null };
-let cave = { bottles: [], history: [] };
+let cave = { bottles: [], history: [], preferences: {} };
 let ui   = {
   currentId: null, editingId: null,
   filters: { color: null, region: null, maturity: null, location: null, vintage: null },
   sort: { field: 'producer', dir: 'asc' },
-  online: navigator.onLine, pendingPush: false
+  online: navigator.onLine, pendingPush: false,
+  consumeRating: null
 };
 
 /* ── HELPERS ── */
@@ -665,13 +732,21 @@ function doLogout() {
 function showApp() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.remove('hidden');
+  loadPrefsToForm();
   render();
   updateApiStatus();
 }
 
 /* ── CACHE ── */
 function loadCache() {
-  try { const d = JSON.parse(localStorage.getItem(LS_CACHE)||'null'); if (d) { cave.bottles=d.bottles||[]; cave.history=d.history||[];  } } catch(_) {}
+  try {
+    const d = JSON.parse(localStorage.getItem(LS_CACHE)||'null');
+    if (d) {
+      cave.bottles = d.bottles || [];
+      cave.history = d.history || [];
+      cave.preferences = d.preferences || {};
+    }
+  } catch(_) {}
 }
 function saveCache() { localStorage.setItem(LS_CACHE, JSON.stringify(cave)); }
 
@@ -694,8 +769,11 @@ async function pullGist(silent=false) {
     const g = await r.json(), f = g.files['cave-data.json'];
     if (f?.content) {
       const d = JSON.parse(f.content);
-      cave.bottles = d.bottles||[]; cave.history = d.history||[];
+      cave.bottles = d.bottles||[];
+      cave.history = d.history||[];
+      cave.preferences = d.preferences || {};
       saveCache();
+      loadPrefsToForm();
     }
     setSyncUI('ok'); render();
   } catch(e) { setSyncUI('err'); if (!silent) toast('Erreur sync : ' + e.message, true); }
@@ -712,7 +790,12 @@ async function doPush() {
   if (!auth.token || !auth.gistId || !ui.online) return;
   setSyncUI('spin');
   try {
-    const payload = { bottles: cave.bottles, history: cave.history, lastUpdated: new Date().toISOString() };
+    const payload = {
+      bottles: cave.bottles,
+      history: cave.history,
+      preferences: cave.preferences,
+      lastUpdated: new Date().toISOString()
+    };
     const r = await fetch(`https://api.github.com/gists/${auth.gistId}`, {
       method: 'PATCH',
       headers: { 'Authorization': `token ${auth.token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
@@ -729,6 +812,40 @@ async function forcePush() { await doPush(); toast('Envoyé vers le Gist'); }
 window.addEventListener('online',  () => { ui.online = true;  if (ui.pendingPush) doPush(); else pullGist(true); });
 window.addEventListener('offline', () => { ui.online = false; setSyncUI('offline'); });
 
+/* ── PRÉFÉRENCES ── */
+function loadPrefsToForm() {
+  const p = cave.preferences || {};
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+  set('pref-style', p.style);
+  set('pref-regions', p.regionsLiked);
+  set('pref-regions-avoid', p.regionsAvoided);
+  set('pref-grapes', p.grapesLiked);
+  set('pref-grapes-avoid', p.grapesAvoided);
+  set('pref-budget-daily', p.budgetDaily);
+  set('pref-budget-special', p.budgetSpecial);
+  set('pref-notes', p.notes);
+}
+
+function savePrefs() {
+  cave.preferences = {
+    style: gv('pref-style'),
+    regionsLiked: gv('pref-regions'),
+    regionsAvoided: gv('pref-regions-avoid'),
+    grapesLiked: gv('pref-grapes'),
+    grapesAvoided: gv('pref-grapes-avoid'),
+    budgetDaily: parseFloat(gv('pref-budget-daily')) || null,
+    budgetSpecial: parseFloat(gv('pref-budget-special')) || null,
+    notes: gv('pref-notes')
+  };
+  schedulePush();
+  toast('Profil sommelier enregistré ✦');
+}
+
+function hasPrefs() {
+  const p = cave.preferences || {};
+  return !!(p.style || p.regionsLiked || p.regionsAvoided || p.grapesLiked || p.grapesAvoided || p.budgetDaily || p.budgetSpecial || p.notes);
+}
+
 /* ── NAV ── */
 function goTo(p) {
   document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
@@ -736,9 +853,10 @@ function goTo(p) {
   document.getElementById('page-'+p).classList.add('active');
   document.getElementById('nb-'+p).classList.add('active');
   if (p==='cave') render();
+  if (p==='ai') renderRecoContext();
   if (p==='historique') renderHist();
   if (p==='stats') renderStats();
-  if (p==='settings') updateApiStatus();
+  if (p==='settings') { updateApiStatus(); loadPrefsToForm(); }
 }
 
 /* ── RENDER ── */
@@ -783,8 +901,8 @@ function renderSidebar() {
     if(b.vintage) vc[b.vintage]=(vc[b.vintage]||0)+q;
     const m=mat(b).c; if(mc[m]!==undefined) mc[m]+=q;
   });
-  const regs = Object.entries(rc).sort((a,b)=>b[1]-a[1]); // toutes les régions
-  const vints = Object.keys(vc).map(Number).sort((a,b)=>b-a); // millésimes décroissants
+  const regs = Object.entries(rc).sort((a,b)=>b[1]-a[1]);
+  const vints = Object.keys(vc).map(Number).sort((a,b)=>b-a);
   const cdot = { rouge:'var(--red)', blanc:'#c8a84c', rose:'var(--rose)' };
   document.getElementById('sidebar').innerHTML = `
     <div class="sb-section"><div class="sb-title">Couleur</div><div class="sb-chips">
@@ -862,7 +980,6 @@ function openM(id)  { document.getElementById(id).classList.add('open'); }
 function closeM(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
 
-/* toggle groups */
 document.querySelectorAll('.trow').forEach(row => {
   row.addEventListener('click', e => {
     const b = e.target.closest('.tgl'); if (!b) return;
@@ -871,6 +988,16 @@ document.querySelectorAll('.trow').forEach(row => {
 });
 function getTGL(id) { const s=document.querySelector(`#${id} .tgl.on`); return s?s.dataset.val:null; }
 function setTGL(id,v) { document.querySelectorAll(`#${id} .tgl`).forEach(b=>b.classList.toggle('on',b.dataset.val===v)); }
+
+/* Rating buttons */
+document.getElementById('rate-row').addEventListener('click', e => {
+  const b = e.target.closest('.rate-btn'); if (!b) return;
+  const row = document.getElementById('rate-row');
+  const wasOn = b.classList.contains('on');
+  row.querySelectorAll('.rate-btn').forEach(x => x.classList.remove('on'));
+  if (!wasOn) { b.classList.add('on'); ui.consumeRating = parseInt(b.dataset.val); }
+  else ui.consumeRating = null;
+});
 
 /* ── ADD / EDIT ── */
 function switchTab(t) {
@@ -985,6 +1112,8 @@ function openConsume() {
   document.getElementById('c-qty').value=1; document.getElementById('c-qty').max=b.quantity;
   document.getElementById('c-date').value=new Date().toISOString().slice(0,10);
   document.getElementById('c-occ').value='';
+  document.querySelectorAll('#rate-row .rate-btn').forEach(x => x.classList.remove('on'));
+  ui.consumeRating = null;
   openM('m-consume');
 }
 function quickConsume(id) { ui.currentId=id; openConsume(); }
@@ -992,9 +1121,20 @@ function confirmConsume() {
   const b=cave.bottles.find(x=>x.id===ui.currentId); if(!b) return;
   const qty=parseInt(gv('c-qty'))||0;
   if(qty<1||qty>b.quantity) { toast('Quantité invalide',true); return; }
-  cave.history.push({ id:'h_'+Date.now().toString(36), bottleId:b.id,
-    snapshot:{producer:b.producer,cuvee:b.cuvee,appellation:b.appellation,vintage:b.vintage,color:b.color,region:b.region},
-    quantity:qty, date:gv('c-date')||new Date().toISOString().slice(0,10), occasion:gv('c-occ') });
+  const entry = {
+    id:'h_'+Date.now().toString(36),
+    bottleId:b.id,
+    snapshot:{
+      producer:b.producer, cuvee:b.cuvee, appellation:b.appellation,
+      vintage:b.vintage, color:b.color, region:b.region,
+      grapes:b.grapes, value:b.value
+    },
+    quantity:qty,
+    date:gv('c-date')||new Date().toISOString().slice(0,10),
+    occasion:gv('c-occ')
+  };
+  if (ui.consumeRating !== null) entry.rating = ui.consumeRating;
+  cave.history.push(entry);
   b.quantity-=qty;
   if(b.quantity<=0) cave.bottles=cave.bottles.filter(x=>x.id!==b.id);
   schedulePush(); closeM('m-consume'); render(); toast(`${qty} bouteille${qty>1?'s':''} sortie${qty>1?'s':''}`);
@@ -1006,7 +1146,6 @@ function doUpload() { document.getElementById('inp-upload').click(); }
 
 async function onPhoto(event) {
   const file = event.target.files[0]; if (!file) return;
-
 
   document.getElementById('p-pick').style.display = 'none';
   document.getElementById('p-load').style.display = 'block';
@@ -1041,9 +1180,7 @@ Mets null pour les champs non identifiables. Pour color, déduis du cépage ou d
 
     const resp = await fetch('/.netlify/functions/claude', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         model: AI_MODEL,
         max_tokens: 1024,
@@ -1097,42 +1234,187 @@ Mets null pour les champs non identifiables. Pour color, déduis du cépage ou d
 /* ── RECO IA ── */
 function setQ(t) { document.getElementById('reco-q').value = t; }
 
+/* Bandeau de contexte au-dessus du moteur de reco */
+function renderRecoContext() {
+  const banner = document.getElementById('reco-context-banner');
+  if (!banner) return;
+  const histCount = cave.history.length;
+  const ratedCount = cave.history.filter(h => typeof h.rating === 'number').length;
+  const prefsOn = hasPrefs();
+  if (!histCount && !prefsOn) {
+    banner.innerHTML = `<div class="reco-context">
+      💡 <strong>Astuce :</strong> renseigne ton <a href="#" onclick="goTo('settings');return false;" style="color:var(--bordeaux)">profil sommelier</a> et ajoute des notes lors des sorties pour des recommandations plus précises.
+    </div>`;
+    return;
+  }
+  const parts = [];
+  if (prefsOn) parts.push('profil sommelier ✓');
+  if (histCount) parts.push(`${histCount} sortie${histCount>1?'s':''} en mémoire`);
+  if (ratedCount) parts.push(`${ratedCount} notée${ratedCount>1?'s':''}`);
+  banner.innerHTML = `<div class="reco-context">L'IA s'appuie sur : <strong>${parts.join(' · ')}</strong></div>`;
+}
+
+/* Construit le contexte à envoyer au modèle */
+function buildRecoContext() {
+  /* Historique récent enrichi */
+  const recent = [...cave.history]
+    .sort((a,b) => (b.date||'').localeCompare(a.date||''))
+    .slice(0, 20)
+    .map(h => {
+      const s = h.snapshot || {};
+      const o = {
+        date: h.date,
+        wine: [s.producer, s.cuvee || s.appellation].filter(Boolean).join(' — '),
+        color: s.color,
+        region: s.region,
+        vintage: s.vintage,
+        grapes: s.grapes,
+        qty: h.quantity
+      };
+      if (h.occasion) o.occasion = h.occasion;
+      if (typeof h.rating === 'number') o.rating = RATE_LBL[String(h.rating)] || h.rating;
+      if (s.value) o.price = s.value;
+      return o;
+    });
+
+  /* Patterns extraits localement */
+  const patterns = computePatterns();
+
+  /* Saison & moment */
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const season = month <= 2 || month === 12 ? 'hiver'
+                : month <= 5 ? 'printemps'
+                : month <= 8 ? 'été'
+                : 'automne';
+  const dayOfWeek = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][now.getDay()];
+
+  return {
+    today: now.toISOString().slice(0,10),
+    season,
+    dayOfWeek,
+    preferences: cave.preferences || {},
+    patterns,
+    recentConsumption: recent
+  };
+}
+
+/* Quelques patterns simples calculés en local */
+function computePatterns() {
+  const h = cave.history;
+  if (!h.length) return null;
+  const colorCount = {rouge:0, blanc:0, rose:0};
+  const regionCount = {};
+  let withRating = 0, sumRating = 0;
+  const lovedRegions = {}, dislikedRegions = {};
+  h.forEach(x => {
+    const s = x.snapshot || {};
+    const q = x.quantity || 1;
+    if (s.color && colorCount[s.color] !== undefined) colorCount[s.color] += q;
+    if (s.region) regionCount[s.region] = (regionCount[s.region]||0) + q;
+    if (typeof x.rating === 'number') {
+      withRating++; sumRating += x.rating;
+      if (s.region) {
+        if (x.rating >= 1) lovedRegions[s.region] = (lovedRegions[s.region]||0) + 1;
+        if (x.rating < 0)  dislikedRegions[s.region] = (dislikedRegions[s.region]||0) + 1;
+      }
+    }
+  });
+  const topRegions = Object.entries(regionCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k} (${v})`);
+  const topLoved = Object.entries(lovedRegions).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} (${v}×👍)`);
+  const topDisliked = Object.entries(dislikedRegions).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} (${v}×👎)`);
+  return {
+    totalConsumed: h.length,
+    colorDistribution: colorCount,
+    topRegionsConsumed: topRegions,
+    avgRating: withRating ? (sumRating/withRating).toFixed(2) : null,
+    ratedCount: withRating,
+    regionsLoved: topLoved,
+    regionsDisliked: topDisliked
+  };
+}
+
 async function runReco() {
   const q = gv('reco-q');
   if (!q)           { toast('Décris l\'occasion', true); return; }
-
   if (!cave.bottles.length) { toast('Cave vide', true); return; }
 
   const btn = document.getElementById('reco-btn');
   btn.disabled = true; btn.textContent = '…';
-  document.getElementById('reco-results').innerHTML = `<div class="ai-wrap"><div class="ai-spin"></div><div class="ai-txt">Claude explore ta cave…</div></div>`;
+  document.getElementById('reco-results').innerHTML = `<div class="ai-wrap"><div class="ai-spin"></div><div class="ai-txt">Claude réfléchit à ta demande…</div></div>`;
 
   try {
     const caveData = cave.bottles.map(b=>({
       id:b.id, producer:b.producer, cuvee:b.cuvee, region:b.region,
       appellation:b.appellation, color:b.color, vintage:b.vintage,
-      grapes:b.grapes, format:b.format, quantity:b.quantity, maturity:mat(b).l,
-      peakStart:b.peakStart, peakEnd:b.peakEnd
+      grapes:b.grapes, format:b.format, quantity:b.quantity,
+      maturity:mat(b).l, peakStart:b.peakStart, peakEnd:b.peakEnd,
+      value:b.value
     }));
 
-    const prompt = `Tu es un sommelier expert passionné. Cave du client :
+    const ctx = buildRecoContext();
+
+    const prompt = `Tu es un sommelier expert et personnel qui connaît cette cave et son propriétaire.
+
+# CONTEXTE — PROFIL DU CLIENT
+${JSON.stringify(ctx.preferences, null, 2)}
+
+# CONTEXTE — PATTERNS DE CONSOMMATION (calculés sur l'historique)
+${ctx.patterns ? JSON.stringify(ctx.patterns, null, 2) : 'Aucun historique disponible.'}
+
+# CONTEXTE — 20 DERNIÈRES SORTIES (du plus récent au plus ancien)
+${ctx.recentConsumption.length ? JSON.stringify(ctx.recentConsumption, null, 2) : 'Aucune sortie enregistrée.'}
+
+# CONTEXTE — MOMENT
+- Date : ${ctx.today}
+- Jour : ${ctx.dayOfWeek}
+- Saison : ${ctx.season}
+
+# LA CAVE DISPONIBLE
 ${JSON.stringify(caveData)}
 
-Demande : "${q}"
+# DEMANDE DU CLIENT
+"${q}"
 
-Choisis 1 bouteille principale + 2 alternatives. Réponds UNIQUEMENT avec un JSON valide, sans markdown :
-{"main":{"id":"...","rationale":"2-3 phrases élégantes sur l'accord, la maturité, le style"},"alternatives":[{"id":"...","rationale":"1-2 phrases"},{"id":"...","rationale":"1-2 phrases"}]}
+# TA MISSION
+Recommande 1 bouteille principale + 2 alternatives.
 
-Règles : privilégie les bouteilles "Prêt". Évite qty=1 sauf grande occasion.`;
+Procède en deux temps dans ton raisonnement (mais ne montre QUE le JSON final) :
+
+ÉTAPE 1 — Analyse silencieuse :
+- Quel type d'accord cette demande appelle-t-elle ? (poids du plat, intensité, registre aromatique)
+- Quelles préférences explicites du profil s'appliquent ?
+- Quels patterns de consommation passée sont pertinents ? (ce qu'il a aimé, ce qu'il évite, ce qu'il a déjà bu récemment)
+- Quel budget est implicite dans la demande ? (apéro/quotidien vs grande occasion)
+- La saison influence-t-elle le choix ?
+
+ÉTAPE 2 — Sélection :
+- Privilégie les bouteilles "À boire !" puis "Peut attendre", évite "Attendre" sauf justification claire
+- Évite de proposer une bouteille bue dans les 14 derniers jours, sauf si elle a été notée 👍 ou ⭐
+- Si une région/cépage a été noté 👎, ne le propose PAS (sauf si la demande l'exige explicitement)
+- Évite les bouteilles avec qty=1 sauf grande occasion explicite
+- Les 3 propositions doivent offrir un VRAI choix : pas trois Bourgogne rouge si tu peux varier
+- Le rationale doit être SPÉCIFIQUE et CONCRET : cite le plat, le cépage, la maturité, ou un élément du profil/historique. JAMAIS de phrases génériques type "ce vin élégant accompagnera parfaitement votre repas"
+
+Format de réponse — UNIQUEMENT ce JSON, sans markdown, sans texte avant/après :
+{
+  "analysis": "1-2 phrases résumant ton raisonnement (saison, accord visé, contraintes appliquées)",
+  "main": {
+    "id": "...",
+    "rationale": "2-3 phrases ÉLÉGANTES et SPÉCIFIQUES sur l'accord — mentionne le cépage/la maturité/un détail du profil ou de l'historique"
+  },
+  "alternatives": [
+    { "id": "...", "rationale": "1-2 phrases spécifiques expliquant en quoi cette alternative diffère" },
+    { "id": "...", "rationale": "1-2 phrases spécifiques expliquant en quoi cette alternative diffère" }
+  ]
+}`;
 
     const resp = await fetch('/.netlify/functions/claude', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         model: AI_MODEL,
-        max_tokens: 1500,
+        max_tokens: 2000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -1147,10 +1429,17 @@ Règles : privilégie les bouteilles "Prêt". Évite qty=1 sauf grande occasion.
     const reco = JSON.parse(txt);
 
     const main = cave.bottles.find(b=>b.id===reco.main.id);
-    if (!main) throw new Error('Bouteille introuvable');
+    if (!main) throw new Error('Bouteille principale introuvable dans la cave');
 
-    let html = recoCard(main, reco.main.rationale, false);
-    (reco.alternatives||[]).forEach(a=>{ const b=cave.bottles.find(x=>x.id===a.id); if(b) html+=recoCard(b,a.rationale,true); });
+    let html = '';
+    if (reco.analysis) {
+      html += `<div class="reco-analysis"><strong>Analyse</strong>${esc(reco.analysis)}</div>`;
+    }
+    html += recoCard(main, reco.main.rationale, false);
+    (reco.alternatives||[]).forEach(a=>{
+      const b=cave.bottles.find(x=>x.id===a.id);
+      if(b) html+=recoCard(b,a.rationale,true);
+    });
     document.getElementById('reco-results').innerHTML = html;
 
   } catch(e) {
@@ -1199,17 +1488,18 @@ function renderHist() {
   if (!cave.history.length) { el.innerHTML=`<div class="empty"><div class="empty-title">Aucune sortie</div><div class="empty-sub">L'historique s'affichera ici</div></div>`; return; }
   el.innerHTML = [...cave.history].sort((a,b)=>b.date.localeCompare(a.date)).map(h=>{
     const s=h.snapshot||{};
+    const rateIcon = (typeof h.rating === 'number') ? ({'-1':'👎','0':'😐','1':'👍','2':'⭐'}[String(h.rating)] || '') : '';
     return `<div class="hist-item">
       <div class="hist-date">${new Date(h.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}</div>
       <div class="hist-wine"><div class="hist-name">${esc(s.cuvee||s.producer||'—')}</div><div class="hist-meta">${esc(s.producer||'')}${s.vintage?' · '+s.vintage:''}${s.appellation?' · '+esc(s.appellation):''}</div></div>
       ${h.occasion?`<div class="hist-occ">"${esc(h.occasion)}"</div>`:''}
+      ${rateIcon?`<div class="hist-rate" title="${esc(RATE_LBL[String(h.rating)]||'')}">${rateIcon}</div>`:''}
       <div class="hist-qty">×${h.quantity}</div>
     </div>`;
   }).join('');
 }
 
 /* ── STATS ── */
-
 function pie(data, colors, size) {
   size = size || 140;
   var total = data.reduce(function(s,d){return s+d.v;},0);
@@ -1343,7 +1633,6 @@ function exportJSON() {
 }
 
 function exportExcel() {
-  // Génère un fichier CSV compatible Excel (avec séparateur ; pour Excel français)
   const header = ['Producteur','Cuvée','Région','Appellation','Couleur','Format','Millésime','Cépage(s)','Quantité','Valeur (€)','Alcool (%)','Apogée début','Apogée fin','Maturité','Emplacement','Date ajout'];
   const rows = cave.bottles.map(b => [
     b.producer||'', b.cuvee||'', b.region||'', b.appellation||'',
@@ -1353,7 +1642,7 @@ function exportExcel() {
     LOC[b.location]||'', b.addedAt ? new Date(b.addedAt).toLocaleDateString('fr-FR') : ''
   ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(';'));
 
-  const bom = '\uFEFF'; // BOM UTF-8 pour qu'Excel reconnaisse les accents
+  const bom = '\uFEFF';
   const csv = bom + header.join(';') + '\n' + rows.join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
