@@ -191,12 +191,34 @@
     .reco-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
     .reco-chip { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; padding: 5px 12px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all .12s; }
     .reco-chip:hover { border-color: var(--bordeaux); color: var(--bordeaux); }
+    .reco-chip.selected { background: var(--bordeaux); border-color: var(--bordeaux); color: #fff; }
     .reco-context { background: var(--parchment); border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 10px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
     .reco-context strong { color: var(--ink); }
+
+    /* ── QUESTIONS IA ── */
+    .questions-wrap { margin-bottom: 20px; }
+    .question-block { margin-bottom: 16px; }
+    .question-lbl { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: var(--ink); margin-bottom: 8px; }
+    .question-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .q-chip { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; padding: 6px 14px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all .12s; background: #fff; }
+    .q-chip:hover { border-color: var(--bordeaux); color: var(--bordeaux); }
+    .q-chip.selected { background: var(--bordeaux); border-color: var(--bordeaux); color: #fff; font-style: normal; }
+    .questions-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+    /* ── BLOCS RECO ── */
+    .reco-bloc { margin-bottom: 24px; }
+    .reco-bloc-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid; }
+    .reco-bloc-hdr.urgente { border-color: #c0392b; }
+    .reco-bloc-hdr.fenetre  { border-color: var(--gold); }
+    .reco-bloc-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; }
+    .reco-bloc-hdr.urgente .reco-bloc-title { color: #c0392b; }
+    .reco-bloc-hdr.fenetre  .reco-bloc-title { color: #8a6a00; }
+    .reco-bloc-sub { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
     .rcard { background: #fff; border: 1px solid var(--border); margin-bottom: 12px; }
     .rcard-hdr { padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.85); }
-    .rcard-hdr.main { background: var(--bordeaux); }
-    .rcard-hdr.alt  { background: var(--ink); }
+    .rcard-hdr.urgente { background: #7a2535; }
+    .rcard-hdr.fenetre  { background: #8a6a00; }
     .rcard-body { display: flex; flex-wrap: wrap; }
     .rcard-info { flex: 1; min-width: 200px; padding: 14px 16px; border-right: 1px solid var(--border); }
     .rcard-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; margin-bottom: 4px; }
@@ -208,7 +230,7 @@
     .rcard-why-txt { font-family: 'Cormorant Garamond', serif; font-size: 14px; line-height: 1.6; font-style: italic; }
     .rcard-foot { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .rcard-stock { font-size: 10px; color: var(--muted); }
-    .reco-analysis { background: #fff; border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 12px; font-family: 'Cormorant Garamond', serif; font-size: 13px; font-style: italic; color: var(--muted); line-height: 1.6; border-left: 3px solid var(--gold); }
+    .reco-analysis { background: #fff; border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; font-family: 'Cormorant Garamond', serif; font-size: 13px; font-style: italic; color: var(--muted); line-height: 1.6; border-left: 3px solid var(--gold); }
     .reco-analysis strong { color: var(--ink); font-style: normal; font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .16em; text-transform: uppercase; display: block; margin-bottom: 6px; }
 
     /* ── HISTORY ── */
@@ -364,10 +386,10 @@
       <div id="main" style="max-width:100%">
         <div class="ai-page">
           <div class="ai-title">Quelle bouteille <em>ce soir ?</em></div>
-          <div class="ai-sub">Décris le moment, le plat, l'occasion — l'IA choisit pour toi</div>
+          <div class="ai-sub">Décris le moment, le plat, l'occasion — l'IA affine avec toi</div>
           <div class="reco-wrap">
-            <input class="reco-in" type="text" id="reco-q" placeholder="Ex : Dîner de fruits de mer…" onkeydown="if(event.key==='Enter')runReco()">
-            <button class="reco-go" id="reco-btn" onclick="runReco()">Recommander →</button>
+            <input class="reco-in" type="text" id="reco-q" placeholder="Ex : Dîner de fruits de mer…" onkeydown="if(event.key==='Enter')startReco()">
+            <button class="reco-go" id="reco-btn" onclick="startReco()">Affiner →</button>
           </div>
           <div class="reco-chips">
             <span class="reco-chip" onclick="setQ('Dîner en famille dimanche midi')">Dîner en famille</span>
@@ -667,7 +689,14 @@ let ui   = {
   filters: { color: null, region: null, maturity: null, location: null, vintage: null },
   sort: { field: 'producer', dir: 'asc' },
   online: navigator.onLine, pendingPush: false,
-  consumeRating: null
+  consumeRating: null,
+  // État du flow IA en 2 étapes
+  recoState: {
+    step: 'idle',       // idle | questions | results
+    initialQuery: '',
+    questions: [],      // [{question, choices:[{label,value}], selected:null}]
+    candidatesPools: null
+  }
 };
 
 /* ── HELPERS ── */
@@ -684,6 +713,20 @@ function mat(b) {
   if (b.peakEnd <= y + 4)     return { c:'m-soon', l:'Peut attendre' };
   return                             { c:'m-wt',   l:'Attendre' };
 }
+
+/* Retourne true si peakStart est atteint et la bouteille n'est pas en zone urgente */
+function isInFenetre(b) {
+  if (!b.peakStart || !b.peakEnd) return false;
+  const y = new Date().getFullYear();
+  return b.peakStart <= y && b.peakEnd > y + 1;
+}
+
+/* Retourne true si la bouteille est urgente (À boire ! ou En retard) */
+function isUrgente(b) {
+  const m = mat(b);
+  return m.c === 'm-rdy' || m.c === 'm-dk';
+}
+
 const totBtl = () => cave.bottles.reduce((s,b) => s + (parseInt(b.quantity)||0), 0);
 const totVal = () => cave.bottles.reduce((s,b) => s + (parseFloat(b.value)||0) * (parseInt(b.quantity)||0), 0);
 
@@ -1166,17 +1209,11 @@ Tu dois estimer peakStart et peakEnd en te basant sur :
 - Le PRODUCTEUR : les domaines prestigieux font des vins de plus longue garde
 
 IMPORTANT : sois CONSERVATEUR. Préfère une fenêtre d'apogée COURTE plutôt que trop longue.
-Exemples :
-- Sancerre 2023 → peakStart: 2024, peakEnd: 2027
-- Châteauneuf-du-Pape 2019 → peakStart: 2024, peakEnd: 2030
-- Pauillac Grand Cru 2016 → peakStart: 2026, peakEnd: 2036
-- Rosé Provence 2024 → peakStart: 2024, peakEnd: 2026
-- Bourgogne Village rouge 2021 → peakStart: 2024, peakEnd: 2028
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans backticks, sans texte avant ou après.
 Format exact :
 {"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","peakStart":null,"peakEnd":null}
-Mets null pour les champs non identifiables. Pour color, déduis du cépage ou du style si besoin.`;
+Mets null pour les champs non identifiables.`;
 
     const resp = await fetch('/.netlify/functions/claude', {
       method: 'POST',
@@ -1231,10 +1268,25 @@ Mets null pour les champs non identifiables. Pour color, déduis du cépage ou d
   event.target.value = '';
 }
 
-/* ── RECO IA ── */
-function setQ(t) { document.getElementById('reco-q').value = t; }
+/* ═══════════════════════════════════════════════════════
+   ── RECO IA — FLOW EN 2 ÉTAPES ──
+   ═══════════════════════════════════════════════════════ */
 
-/* Bandeau de contexte au-dessus du moteur de reco */
+function setQ(t) {
+  document.getElementById('reco-q').value = t;
+  // Reset le flow si on change la question
+  resetRecoFlow();
+}
+
+function resetRecoFlow() {
+  ui.recoState = { step: 'idle', initialQuery: '', questions: [], candidatesPools: null };
+  document.getElementById('reco-results').innerHTML = '';
+  const btn = document.getElementById('reco-btn');
+  btn.textContent = 'Affiner →';
+  btn.onclick = startReco;
+}
+
+/* Bandeau de contexte */
 function renderRecoContext() {
   const banner = document.getElementById('reco-context-banner');
   if (!banner) return;
@@ -1254,9 +1306,349 @@ function renderRecoContext() {
   banner.innerHTML = `<div class="reco-context">L'IA s'appuie sur : <strong>${parts.join(' · ')}</strong></div>`;
 }
 
-/* Construit le contexte à envoyer au modèle */
+/* ── ÉTAPE 1 : Génération des questions d'affinage ── */
+async function startReco() {
+  const q = gv('reco-q');
+  if (!q) { toast('Décris l\'occasion', true); return; }
+  if (!cave.bottles.length) { toast('Cave vide', true); return; }
+
+  const btn = document.getElementById('reco-btn');
+  btn.disabled = true;
+  document.getElementById('reco-results').innerHTML = `<div class="ai-wrap"><div class="ai-spin"></div><div class="ai-txt">L'IA prépare ses questions…</div></div>`;
+
+  try {
+    // Construire les deux pools en JS avant d'appeler l'IA
+    const pools = buildCandidatePools();
+    ui.recoState.candidatesPools = pools;
+    ui.recoState.initialQuery = q;
+
+    const ctx = buildRecoContext();
+
+    const prompt = `Tu es un sommelier expert qui aide à choisir une bouteille dans une cave personnelle.
+
+# DEMANDE
+"${q}"
+
+# PROFIL DU CLIENT
+${JSON.stringify(ctx.preferences, null, 2)}
+
+# HISTORIQUE RÉCENT (20 dernières sorties)
+${ctx.recentConsumption.length ? JSON.stringify(ctx.recentConsumption, null, 2) : 'Aucun historique.'}
+
+# SAISON ET MOMENT
+Date : ${ctx.today} — ${ctx.dayOfWeek} — ${ctx.season}
+
+# BOUTEILLES DISPONIBLES (aperçu)
+Urgentes (À boire maintenant) : ${pools.urgentes.length} bouteilles
+En fenêtre (accessibles, peuvent encore attendre) : ${pools.fenetre.length} bouteilles
+
+Ta mission : poser 1 à 3 questions COURTES et PERTINENTES pour mieux affiner la sélection.
+Chaque question doit avoir exactement 3 choix sous forme de chips cliquables.
+Les questions doivent porter sur des éléments que la demande ne précise PAS encore (occasion, couleur souhaitée, intensité, budget, plat principal si pas mentionné, etc.)
+Ne pose PAS de question si la réponse est déjà claire dans la demande.
+
+Réponds UNIQUEMENT avec ce JSON, sans markdown :
+{
+  "questions": [
+    {
+      "question": "Question courte et naturelle ?",
+      "choices": [
+        {"label": "Option A", "value": "option_a"},
+        {"label": "Option B", "value": "option_b"},
+        {"label": "Option C", "value": "option_c"}
+      ]
+    }
+  ]
+}`;
+
+    const resp = await fetch('/.netlify/functions/claude', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 800,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!resp.ok) throw new Error(`Erreur ${resp.status}`);
+
+    const data = await resp.json();
+    const txt = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(txt);
+
+    ui.recoState.questions = parsed.questions.map(q => ({...q, selected: null}));
+    ui.recoState.step = 'questions';
+
+    renderQuestions();
+
+  } catch(e) {
+    document.getElementById('reco-results').innerHTML = `<div class="empty"><div class="empty-title" style="color:#c0392b">Erreur</div><div class="empty-sub">${esc(e.message)}</div></div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* Affiche les questions avec chips cliquables */
+function renderQuestions() {
+  const btn = document.getElementById('reco-btn');
+  btn.textContent = 'Recommander →';
+  btn.onclick = runReco;
+  btn.disabled = false;
+
+  const qs = ui.recoState.questions;
+  let html = '<div class="questions-wrap">';
+  qs.forEach((q, qi) => {
+    html += `<div class="question-block">
+      <div class="question-lbl">${esc(q.question)}</div>
+      <div class="question-chips">
+        ${q.choices.map(c => `
+          <button class="q-chip ${q.selected === c.value ? 'selected' : ''}"
+            onclick="selectAnswer(${qi}, '${c.value.replace(/'/g,"\\'")}', this)">
+            ${esc(c.label)}
+          </button>`).join('')}
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('reco-results').innerHTML = html;
+}
+
+function selectAnswer(qi, value, el) {
+  ui.recoState.questions[qi].selected = value;
+  // Met à jour le visuel
+  const block = el.closest('.question-block');
+  block.querySelectorAll('.q-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* Construit les deux pools de candidats en JS */
+function buildCandidatePools() {
+  const urgentes = cave.bottles
+    .filter(b => isUrgente(b) && parseInt(b.quantity) > 0)
+    .map(b => ({
+      id: b.id,
+      producer: b.producer,
+      cuvee: b.cuvee,
+      appellation: b.appellation,
+      region: b.region,
+      color: b.color,
+      vintage: b.vintage,
+      grapes: b.grapes,
+      format: b.format,
+      quantity: b.quantity,
+      value: b.value,
+      peakStart: b.peakStart,
+      peakEnd: b.peakEnd,
+      maturity: mat(b).l
+    }));
+
+  const fenetre = cave.bottles
+    .filter(b => isInFenetre(b) && parseInt(b.quantity) > 0)
+    .map(b => ({
+      id: b.id,
+      producer: b.producer,
+      cuvee: b.cuvee,
+      appellation: b.appellation,
+      region: b.region,
+      color: b.color,
+      vintage: b.vintage,
+      grapes: b.grapes,
+      format: b.format,
+      quantity: b.quantity,
+      value: b.value,
+      peakStart: b.peakStart,
+      peakEnd: b.peakEnd,
+      maturity: mat(b).l
+    }));
+
+  return { urgentes, fenetre };
+}
+
+/* ── ÉTAPE 2 : Génération des 6 recommandations ── */
+async function runReco() {
+  const btn = document.getElementById('reco-btn');
+  btn.disabled = true;
+  document.getElementById('reco-results').innerHTML = `<div class="ai-wrap"><div class="ai-spin"></div><div class="ai-txt">Le sommelier choisit vos bouteilles…</div></div>`;
+
+  try {
+    const pools = ui.recoState.candidatesPools;
+    const answers = ui.recoState.questions
+      .filter(q => q.selected)
+      .map(q => {
+        const choice = q.choices.find(c => c.value === q.selected);
+        return `${q.question} → ${choice ? choice.label : q.selected}`;
+      });
+
+    const ctx = buildRecoContext();
+
+    const prompt = `Tu es un sommelier expert. Sélectionne 6 bouteilles depuis deux pools distincts fournis ci-dessous.
+
+# DEMANDE INITIALE
+"${ui.recoState.initialQuery}"
+
+# PRÉCISIONS APPORTÉES PAR LE CLIENT
+${answers.length ? answers.map(a => '• ' + a).join('\n') : 'Aucune précision supplémentaire.'}
+
+# PROFIL DU CLIENT
+${JSON.stringify(ctx.preferences, null, 2)}
+
+# PATTERNS DE CONSOMMATION
+${ctx.patterns ? JSON.stringify(ctx.patterns, null, 2) : 'Aucun historique.'}
+
+# HISTORIQUE RÉCENT (20 dernières sorties)
+${ctx.recentConsumption.length ? JSON.stringify(ctx.recentConsumption, null, 2) : 'Aucune sortie.'}
+
+# SAISON ET MOMENT
+Date : ${ctx.today} — ${ctx.dayOfWeek} — ${ctx.season}
+
+# POOL 1 — URGENTES (À boire maintenant — peakEnd imminent ou dépassé)
+Ces bouteilles sont à leur pic ou au-delà, il est temps de les ouvrir.
+${pools.urgentes.length ? JSON.stringify(pools.urgentes) : '[]'}
+
+# POOL 2 — EN FENÊTRE (peakStart atteint, peakEnd encore loin)
+Ces bouteilles sont accessibles mais peuvent encore attendre. On peut les ouvrir maintenant avec plaisir.
+${pools.fenetre.length ? JSON.stringify(pools.fenetre) : '[]'}
+
+# RÈGLES DE SÉLECTION STRICTES
+1. Choisis exactement 3 ids dans le POOL 1 (urgentes). Si moins de 3 disponibles, retourne celles disponibles.
+2. Choisis exactement 3 ids dans le POOL 2 (fenetre). Si moins de 3 disponibles, retourne celles disponibles.
+3. Dans chaque pool, assure une VRAIE diversité : couleurs différentes si possible, régions différentes si possible.
+4. Évite les bouteilles bues dans les 14 derniers jours sauf si notées 👍 ou ⭐.
+5. Si une région/cépage a été noté 👎 dans l'historique, ne le propose pas.
+6. Le rationale doit être SPÉCIFIQUE : cite le cépage, la maturité, un élément de la demande ou du profil. Jamais de phrases génériques.
+
+Réponds UNIQUEMENT avec ce JSON, sans markdown :
+{
+  "analysis": "1-2 phrases sur l'accord visé et les contraintes appliquées",
+  "urgentes": [
+    {"id": "...", "rationale": "2-3 phrases spécifiques et élégantes"},
+    {"id": "...", "rationale": "..."},
+    {"id": "...", "rationale": "..."}
+  ],
+  "fenetre": [
+    {"id": "...", "rationale": "2-3 phrases spécifiques — mentionne pourquoi ouvrir maintenant est pertinent même si la bouteille peut attendre"},
+    {"id": "...", "rationale": "..."},
+    {"id": "...", "rationale": "..."}
+  ]
+}`;
+
+    const resp = await fetch('/.netlify/functions/claude', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!resp.ok) throw new Error(`Erreur ${resp.status}`);
+
+    const data = await resp.json();
+    const txt  = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
+    const reco = JSON.parse(txt);
+
+    let html = '';
+
+    if (reco.analysis) {
+      html += `<div class="reco-analysis"><strong>Analyse du sommelier</strong>${esc(reco.analysis)}</div>`;
+    }
+
+    // BLOC URGENTES
+    const urgentesCards = (reco.urgentes || []).map(r => {
+      const b = cave.bottles.find(x => x.id === r.id);
+      return b ? recoCard(b, r.rationale, 'urgente') : '';
+    }).filter(Boolean);
+
+    if (urgentesCards.length) {
+      html += `<div class="reco-bloc">
+        <div class="reco-bloc-hdr urgente">
+          <span style="font-size:16px">🔴</span>
+          <div>
+            <div class="reco-bloc-title">À ouvrir maintenant</div>
+            <div class="reco-bloc-sub">Pic d'apogée atteint — ne pas trop attendre</div>
+          </div>
+        </div>
+        ${urgentesCards.join('')}
+      </div>`;
+    } else {
+      html += `<div class="reco-bloc"><div class="reco-bloc-hdr urgente"><span style="font-size:16px">🔴</span><div><div class="reco-bloc-title">À ouvrir maintenant</div></div></div><div style="font-size:11px;color:var(--muted);padding:12px 0;font-style:italic">Aucune bouteille urgente dans ta cave pour cette demande.</div></div>`;
+    }
+
+    // BLOC FENÊTRE
+    const fenetreCards = (reco.fenetre || []).map(r => {
+      const b = cave.bottles.find(x => x.id === r.id);
+      return b ? recoCard(b, r.rationale, 'fenetre') : '';
+    }).filter(Boolean);
+
+    if (fenetreCards.length) {
+      html += `<div class="reco-bloc">
+        <div class="reco-bloc-hdr fenetre">
+          <span style="font-size:16px">🟡</span>
+          <div>
+            <div class="reco-bloc-title">En fenêtre — peut encore attendre</div>
+            <div class="reco-bloc-sub">Apogée commencée · Pas d'urgence · Déjà accessible</div>
+          </div>
+        </div>
+        ${fenetreCards.join('')}
+      </div>`;
+    } else {
+      html += `<div class="reco-bloc"><div class="reco-bloc-hdr fenetre"><span style="font-size:16px">🟡</span><div><div class="reco-bloc-title">En fenêtre</div></div></div><div style="font-size:11px;color:var(--muted);padding:12px 0;font-style:italic">Aucune bouteille en fenêtre d'apogée pour cette demande.</div></div>`;
+    }
+
+    // Bouton recommencer
+    html += `<div style="text-align:center;margin-top:8px">
+      <button class="btn btn-ghost" onclick="resetRecoFlow()" style="font-size:9px">↺ Nouvelle recherche</button>
+    </div>`;
+
+    document.getElementById('reco-results').innerHTML = html;
+    ui.recoState.step = 'results';
+
+  } catch(e) {
+    document.getElementById('reco-results').innerHTML = `<div class="empty"><div class="empty-title" style="color:#c0392b">Erreur</div><div class="empty-sub">${esc(e.message)}</div></div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function recoCard(b, txt, bloc) {
+  const m = mat(b);
+  return `<div class="rcard">
+    <div class="rcard-hdr ${bloc}">
+      <span>${esc(b.cuvee||b.appellation||b.producer)}</span>
+      <span>${LOC[b.location]||''}</span>
+    </div>
+    <div class="rcard-body">
+      <div class="rcard-info">
+        <div class="rcard-name">${esc(b.cuvee||b.appellation||b.producer)}</div>
+        <div class="rcard-meta">${esc(b.producer)}${b.region?' · '+esc(b.region):''}${b.vintage?' · '+b.vintage:''}</div>
+        <div class="rcard-tags">
+          <span class="rtag">${COL[b.color]||'—'}</span>
+          ${b.grapes?`<span class="rtag">${esc(b.grapes)}</span>`:''}
+          <span class="rtag">${FMT[b.format]||''}</span>
+          <span class="rtag"><span class="mbadge ${m.c}">${m.l}</span></span>
+          ${b.peakStart&&b.peakEnd?`<span class="rtag" style="color:var(--muted)">Apogée ${b.peakStart}–${b.peakEnd}</span>`:''}
+        </div>
+      </div>
+      <div class="rcard-why">
+        <div class="rcard-why-lbl">Pourquoi ce choix</div>
+        <div class="rcard-why-txt">${esc(txt)}</div>
+      </div>
+    </div>
+    <div class="rcard-foot">
+      <span class="rcard-stock">Stock : <strong>${b.quantity}</strong></span>
+      ${b.value ? `<span class="rcard-stock" style="margin-left:8px">${fEur(b.value)}</span>` : ''}
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="openDetail('${b.id}')">Détails</button>
+        <button class="btn btn-prim"  onclick="quickConsume('${b.id}')">Sortir</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* Contexte enrichi pour le prompt */
 function buildRecoContext() {
-  /* Historique récent enrichi */
   const recent = [...cave.history]
     .sort((a,b) => (b.date||'').localeCompare(a.date||''))
     .slice(0, 20)
@@ -1277,10 +1669,8 @@ function buildRecoContext() {
       return o;
     });
 
-  /* Patterns extraits localement */
   const patterns = computePatterns();
 
-  /* Saison & moment */
   const now = new Date();
   const month = now.getMonth() + 1;
   const season = month <= 2 || month === 12 ? 'hiver'
@@ -1299,7 +1689,6 @@ function buildRecoContext() {
   };
 }
 
-/* Quelques patterns simples calculés en local */
 function computePatterns() {
   const h = cave.history;
   if (!h.length) return null;
@@ -1332,154 +1721,6 @@ function computePatterns() {
     regionsLoved: topLoved,
     regionsDisliked: topDisliked
   };
-}
-
-async function runReco() {
-  const q = gv('reco-q');
-  if (!q)           { toast('Décris l\'occasion', true); return; }
-  if (!cave.bottles.length) { toast('Cave vide', true); return; }
-
-  const btn = document.getElementById('reco-btn');
-  btn.disabled = true; btn.textContent = '…';
-  document.getElementById('reco-results').innerHTML = `<div class="ai-wrap"><div class="ai-spin"></div><div class="ai-txt">Claude réfléchit à ta demande…</div></div>`;
-
-  try {
-    const caveData = cave.bottles.map(b=>({
-      id:b.id, producer:b.producer, cuvee:b.cuvee, region:b.region,
-      appellation:b.appellation, color:b.color, vintage:b.vintage,
-      grapes:b.grapes, format:b.format, quantity:b.quantity,
-      maturity:mat(b).l, peakStart:b.peakStart, peakEnd:b.peakEnd,
-      value:b.value
-    }));
-
-    const ctx = buildRecoContext();
-
-    const prompt = `Tu es un sommelier expert et personnel qui connaît cette cave et son propriétaire.
-
-# CONTEXTE — PROFIL DU CLIENT
-${JSON.stringify(ctx.preferences, null, 2)}
-
-# CONTEXTE — PATTERNS DE CONSOMMATION (calculés sur l'historique)
-${ctx.patterns ? JSON.stringify(ctx.patterns, null, 2) : 'Aucun historique disponible.'}
-
-# CONTEXTE — 20 DERNIÈRES SORTIES (du plus récent au plus ancien)
-${ctx.recentConsumption.length ? JSON.stringify(ctx.recentConsumption, null, 2) : 'Aucune sortie enregistrée.'}
-
-# CONTEXTE — MOMENT
-- Date : ${ctx.today}
-- Jour : ${ctx.dayOfWeek}
-- Saison : ${ctx.season}
-
-# LA CAVE DISPONIBLE
-${JSON.stringify(caveData)}
-
-# DEMANDE DU CLIENT
-"${q}"
-
-# TA MISSION
-Recommande 1 bouteille principale + 2 alternatives.
-
-Procède en deux temps dans ton raisonnement (mais ne montre QUE le JSON final) :
-
-ÉTAPE 1 — Analyse silencieuse :
-- Quel type d'accord cette demande appelle-t-elle ? (poids du plat, intensité, registre aromatique)
-- Quelles préférences explicites du profil s'appliquent ?
-- Quels patterns de consommation passée sont pertinents ? (ce qu'il a aimé, ce qu'il évite, ce qu'il a déjà bu récemment)
-- Quel budget est implicite dans la demande ? (apéro/quotidien vs grande occasion)
-- La saison influence-t-elle le choix ?
-
-ÉTAPE 2 — Sélection :
-- Privilégie les bouteilles "À boire !" puis "Peut attendre", évite "Attendre" sauf justification claire
-- Évite de proposer une bouteille bue dans les 14 derniers jours, sauf si elle a été notée 👍 ou ⭐
-- Si une région/cépage a été noté 👎, ne le propose PAS (sauf si la demande l'exige explicitement)
-- Évite les bouteilles avec qty=1 sauf grande occasion explicite
-- Les 3 propositions doivent offrir un VRAI choix : pas trois Bourgogne rouge si tu peux varier
-- Le rationale doit être SPÉCIFIQUE et CONCRET : cite le plat, le cépage, la maturité, ou un élément du profil/historique. JAMAIS de phrases génériques type "ce vin élégant accompagnera parfaitement votre repas"
-
-Format de réponse — UNIQUEMENT ce JSON, sans markdown, sans texte avant/après :
-{
-  "analysis": "1-2 phrases résumant ton raisonnement (saison, accord visé, contraintes appliquées)",
-  "main": {
-    "id": "...",
-    "rationale": "2-3 phrases ÉLÉGANTES et SPÉCIFIQUES sur l'accord — mentionne le cépage/la maturité/un détail du profil ou de l'historique"
-  },
-  "alternatives": [
-    { "id": "...", "rationale": "1-2 phrases spécifiques expliquant en quoi cette alternative diffère" },
-    { "id": "...", "rationale": "1-2 phrases spécifiques expliquant en quoi cette alternative diffère" }
-  ]
-}`;
-
-    const resp = await fetch('/.netlify/functions/claude', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!resp.ok) {
-      const body = await resp.text();
-      throw new Error(`Erreur ${resp.status} — ${body.slice(0,300)}`);
-    }
-
-    const data = await resp.json();
-    const txt  = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
-    const reco = JSON.parse(txt);
-
-    const main = cave.bottles.find(b=>b.id===reco.main.id);
-    if (!main) throw new Error('Bouteille principale introuvable dans la cave');
-
-    let html = '';
-    if (reco.analysis) {
-      html += `<div class="reco-analysis"><strong>Analyse</strong>${esc(reco.analysis)}</div>`;
-    }
-    html += recoCard(main, reco.main.rationale, false);
-    (reco.alternatives||[]).forEach(a=>{
-      const b=cave.bottles.find(x=>x.id===a.id);
-      if(b) html+=recoCard(b,a.rationale,true);
-    });
-    document.getElementById('reco-results').innerHTML = html;
-
-  } catch(e) {
-    document.getElementById('reco-results').innerHTML = `<div class="empty"><div class="empty-title" style="color:#c0392b">Erreur</div><div class="empty-sub">${esc(e.message)}</div></div>`;
-  } finally {
-    btn.disabled = false; btn.textContent = 'Recommander →';
-  }
-}
-
-function recoCard(b, txt, isAlt) {
-  const m = mat(b);
-  return `<div class="rcard">
-    <div class="rcard-hdr ${isAlt?'alt':'main'}">
-      <span>${isAlt?'Alternative':'✦ Recommandation principale'}</span>
-      <span>${LOC[b.location]||''}</span>
-    </div>
-    <div class="rcard-body">
-      <div class="rcard-info">
-        <div class="rcard-name">${esc(b.cuvee||b.appellation||b.producer)}</div>
-        <div class="rcard-meta">${esc(b.producer)}${b.region?' · '+esc(b.region):''}${b.vintage?' · '+b.vintage:''}</div>
-        <div class="rcard-tags">
-          <span class="rtag">${COL[b.color]||'—'}</span>
-          ${b.grapes?`<span class="rtag">${esc(b.grapes)}</span>`:''}
-          <span class="rtag">${FMT[b.format]||''}</span>
-          <span class="rtag"><span class="mbadge ${m.c}">${m.l}</span></span>
-        </div>
-      </div>
-      <div class="rcard-why">
-        <div class="rcard-why-lbl">Pourquoi ce choix</div>
-        <div class="rcard-why-txt">${esc(txt)}</div>
-      </div>
-    </div>
-    <div class="rcard-foot">
-      <span class="rcard-stock">Stock : <strong>${b.quantity}</strong></span>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <button class="btn btn-ghost" onclick="openDetail('${b.id}')">Détails</button>
-        <button class="btn btn-prim"  onclick="quickConsume('${b.id}')">Sortir</button>
-      </div>
-    </div>
-  </div>`;
 }
 
 /* ── HISTORIQUE ── */
@@ -1614,7 +1855,7 @@ function renderStats() {
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
     +card('Bouteilles par millésime',histo(vintData,'var(--bordeaux)'))
-    +card('Fin d’apogée',histoPeak(peakData,peakColor))
+    +card('Fin d\'apogée',histoPeak(peakData,peakColor))
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
     +card('Sorties par semaine (10 dernières)',histo(weeksData,'#4a7c59',wlf))
