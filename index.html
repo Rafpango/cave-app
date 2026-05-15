@@ -88,6 +88,11 @@
     .btn-ghost:hover:not(:disabled) { border-color: var(--bordeaux); color: var(--bordeaux); }
     .btn-danger { background: transparent; border: 1px solid #c0392b; color: #c0392b; }
     .btn-danger:hover:not(:disabled) { background: #c0392b; color: #fff; }
+    .btn-ai { background: transparent; border: 1px solid var(--gold); color: #8a6a00; }
+    .btn-ai:hover:not(:disabled) { background: var(--gold); color: #fff; }
+
+    /* Spinner inline (dans bouton) */
+    .btn-spin { display: inline-block; width: 10px; height: 10px; border: 1.5px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; margin-right: 6px; }
 
     /* ── TABLE ── */
     .table-wrap { background: #fff; border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -127,18 +132,28 @@
     .mtab { flex: 1; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; padding: 12px 8px; cursor: pointer; text-align: center; transition: all .15s; }
     .mtab.active { color: var(--bordeaux); border-bottom-color: var(--bordeaux); background: #fff; }
     .mbody { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
-    .mfoot { padding: 14px 20px; background: var(--parchment); border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; flex-shrink: 0; padding-bottom: calc(14px + var(--safe-b)); }
+    .mfoot { padding: 14px 20px; background: var(--parchment); border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; flex-shrink: 0; padding-bottom: calc(14px + var(--safe-b)); flex-wrap: wrap; }
     .mfoot .btn { min-width: 120px; }
 
     /* ── FORM ── */
     .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .frow { grid-column: 1 / -1; }
-    .fg { display: flex; flex-direction: column; gap: 5px; }
-    .flbl { font-size: 8px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+    .fg { display: flex; flex-direction: column; gap: 5px; position: relative; }
+    .flbl { font-size: 8px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
     .flbl.req::after { content: ' *'; color: var(--bordeaux); }
-    .finput { background: #fff; border: 1px solid var(--border); padding: 9px 11px; font-size: 16px; outline: none; -webkit-appearance: none; border-radius: 0; width: 100%; transition: border-color .15s; }
+    .finput { background: #fff; border: 1px solid var(--border); padding: 9px 11px; font-size: 16px; outline: none; -webkit-appearance: none; border-radius: 0; width: 100%; transition: border-color .15s, background .15s; }
     .finput:focus { border-color: var(--bordeaux); }
+    .finput.ai-suggested { background: #fffbf0; border-color: var(--gold); }
     textarea.finput { font-family: 'DM Mono', monospace; font-size: 13px; min-height: 60px; resize: vertical; }
+    .ai-tag { font-size: 7px; letter-spacing: .12em; text-transform: uppercase; background: var(--gold); color: #fff; padding: 1px 5px; border-radius: 2px; }
+
+    /* Bandeau "Estimation IA" dans modale ajout */
+    .ai-estimate-box { grid-column: 1 / -1; background: #fff; border: 1px solid var(--gold); border-left: 3px solid var(--gold); padding: 12px 14px; margin: 6px 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .ai-estimate-text { flex: 1; min-width: 180px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--ink); line-height: 1.4; }
+    .ai-estimate-text small { display: block; font-family: 'DM Mono', monospace; font-style: normal; font-size: 9px; color: var(--muted); margin-top: 2px; letter-spacing: .04em; }
+    .ai-estimate-reasoning { grid-column: 1 / -1; background: var(--parchment); border-left: 2px solid var(--gold); padding: 10px 14px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: -4px; }
+    .ai-estimate-reasoning strong { color: var(--ink); font-style: normal; font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .14em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
     .trow { display: flex; }
     .tgl { flex: 1; background: #fff; border: 1px solid var(--border); border-right: none; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .06em; padding: 10px 6px; cursor: pointer; text-align: center; transition: all .12s; }
     .tgl:last-child { border-right: 1px solid var(--border); }
@@ -169,6 +184,7 @@
     .dlbl { font-size: 8px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
     .dval { font-family: 'Cormorant Garamond', serif; font-size: 16px; }
     .dval.big { font-size: 26px; color: var(--bordeaux); }
+    .dval.missing { color: var(--muted); font-style: italic; }
 
     /* ── CONSUME ── */
     .cinfo { background: var(--parchment); border-left: 3px solid var(--gold); padding: 12px 14px; margin-bottom: 16px; font-size: 12px; }
@@ -259,6 +275,14 @@
     .apirow { display: flex; gap: 8px; align-items: stretch; }
     .apirow .finput { flex: 1; }
     #api-status { font-size: 9px; margin-top: 6px; }
+
+    /* Carte estimation par lot */
+    .batch-counter { display: inline-block; background: var(--gold); color: #fff; padding: 2px 8px; font-size: 10px; letter-spacing: .08em; font-weight: 400; margin-left: 8px; }
+    .batch-item { padding: 10px 12px; border: 1px solid var(--border); margin-bottom: 6px; display: flex; align-items: center; gap: 10px; font-size: 11px; }
+    .batch-item-info { flex: 1; min-width: 0; }
+    .batch-item-name { font-family: 'Cormorant Garamond', serif; font-size: 14px; }
+    .batch-item-meta { font-size: 9px; color: var(--muted); }
+    .batch-item-missing { font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
     /* ── TOAST ── */
     #toast { position: fixed; bottom: calc(20px + var(--safe-b)); left: 50%; transform: translateX(-50%) translateY(100px); background: var(--ink); color: #fff; padding: 11px 20px; font-size: 11px; border-left: 3px solid var(--gold); transition: transform .3s; z-index: 999; white-space: nowrap; max-width: calc(100vw - 40px); overflow: hidden; text-overflow: ellipsis; }
@@ -472,10 +496,23 @@
         </div>
 
         <div class="scard">
+          <div class="scard-title">
+            ✦ Compléter prix & apogée
+            <span class="batch-counter" id="batch-counter">0</span>
+          </div>
+          <div class="scard-desc">
+            Estimation par lot des bouteilles auxquelles il manque le prix ou la fenêtre d'apogée.<br>
+            Chaque proposition de l'IA s'affiche pour validation avant écriture.
+          </div>
+          <div id="batch-preview" style="margin-bottom:12px"></div>
+          <button class="btn btn-prim" id="batch-launch-btn" onclick="openBatchEstimate()">Lancer le traitement par lot</button>
+        </div>
+
+        <div class="scard">
           <div class="scard-title">IA Claude <span style="font-size:10px;color:#2e7d32">✓ Active</span></div>
           <div class="scard-desc">
             La clé API est configurée côté serveur (Netlify).<br>
-            Les fonctions IA (photo d'étiquette + recommandation) sont opérationnelles.
+            Les fonctions IA (photo d'étiquette + recommandation + estimation) sont opérationnelles.
           </div>
         </div>
 
@@ -534,7 +571,7 @@
           <div class="photo-zone" onclick="doCamera()">
             <div class="pz-icon">📷</div>
             <div class="pz-title">Photographier l'étiquette</div>
-            <div class="pz-sub">L'IA remplira le formulaire automatiquement</div>
+            <div class="pz-sub">L'IA remplira les champs factuels (domaine, millésime, cépage…)</div>
           </div>
           <div class="pbtn-row">
             <button class="btn btn-ghost" onclick="doUpload()">📁 Choisir un fichier</button>
@@ -546,12 +583,12 @@
         <div id="p-load" style="display:none">
           <div class="ai-wrap">
             <div class="ai-spin"></div>
-            <div class="ai-txt">Claude analyse l'étiquette…</div>
+            <div class="ai-txt">Claude lit l'étiquette…</div>
           </div>
         </div>
         <div id="p-done" style="display:none">
           <img id="photo-preview" alt="Aperçu">
-          <p style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px">✓ Données extraites — vérifie et enregistre</p>
+          <p style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px">✓ Étiquette lue — vérifie, complète si besoin, puis tu pourras estimer prix & apogée</p>
         </div>
       </div>
 
@@ -598,8 +635,23 @@
           <div class="fg"><label class="flbl">Millésime</label><input class="finput" type="number" id="f-vintage" placeholder="2019" min="1900" max="2100"></div>
           <div class="fg"><label class="flbl">Cépage(s)</label><input class="finput" type="text" id="f-grapes" placeholder="ex. Pinot Noir"></div>
           <div class="fg"><label class="flbl req">Quantité</label><input class="finput" type="number" id="f-qty" value="1" min="1"></div>
-          <div class="fg"><label class="flbl">Valeur (€)</label><input class="finput" type="number" id="f-value" placeholder="85" min="0" step="0.01"></div>
           <div class="fg"><label class="flbl">Alcool (%)</label><input class="finput" type="number" id="f-abv" placeholder="13.5" min="0" max="100" step="0.1"></div>
+
+          <!-- Encart Estimation IA -->
+          <div class="ai-estimate-box">
+            <div class="ai-estimate-text">
+              Estimer prix & apogée
+              <small>Une fois producteur + couleur renseignés, l'IA propose une valeur et une fenêtre de garde</small>
+            </div>
+            <button type="button" class="btn btn-ai" id="btn-estimate" onclick="estimatePriceAndPeak()">✦ Estimer</button>
+          </div>
+          <div id="ai-estimate-reasoning-box" style="display:none" class="ai-estimate-reasoning">
+            <strong>Raisonnement du sommelier</strong>
+            <span id="ai-estimate-reasoning-text"></span>
+          </div>
+
+          <div class="fg"><label class="flbl">Valeur (€)</label><input class="finput" type="number" id="f-value" placeholder="85" min="0" step="0.01"></div>
+          <div class="fg"></div>
           <div class="fg"><label class="flbl">Apogée début</label><input class="finput" type="number" id="f-ps" placeholder="2026" min="1900" max="2100"></div>
           <div class="fg"><label class="flbl">Apogée fin</label><input class="finput" type="number" id="f-pe" placeholder="2035" min="1900" max="2100"></div>
           <div class="fg frow">
@@ -631,6 +683,7 @@
     <div class="mbody" id="detail-body"></div>
     <div class="mfoot">
       <button class="btn btn-danger" onclick="delBottle()">Supprimer</button>
+      <button class="btn btn-ai" id="btn-detail-estimate" onclick="estimateFromDetail()" style="display:none">✦ Estimer prix & apogée</button>
       <button class="btn btn-ghost"  onclick="editBottle()">Modifier</button>
       <button class="btn btn-prim"   onclick="openConsume()">Sortir</button>
     </div>
@@ -666,6 +719,25 @@
   </div>
 </div>
 
+<!-- ══ MODAL ESTIMATION PAR LOT ══ -->
+<div class="overlay" id="m-batch">
+  <div class="mbox" style="max-width:620px">
+    <div class="mhdr">
+      <div class="mtitle">Estimation <em>par lot</em></div>
+      <button class="mclose" onclick="closeBatch()">×</button>
+    </div>
+    <div class="mbody" id="batch-body">
+      <div id="batch-progress" style="font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:.08em;text-transform:uppercase"></div>
+      <div id="batch-current"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" onclick="batchSkip()">Passer</button>
+      <button class="btn btn-danger" onclick="closeBatch()">Quitter</button>
+      <button class="btn btn-prim" onclick="batchAccept()" id="batch-accept-btn" disabled>Valider et continuer</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -690,12 +762,18 @@ let ui   = {
   sort: { field: 'producer', dir: 'asc' },
   online: navigator.onLine, pendingPush: false,
   consumeRating: null,
-  // État du flow IA en 2 étapes
   recoState: {
-    step: 'idle',       // idle | questions | results
+    step: 'idle',
     initialQuery: '',
-    questions: [],      // [{question, choices:[{label,value}], selected:null}]
+    questions: [],
     candidatesPools: null
+  },
+  // État estimation par lot
+  batchState: {
+    queue: [],          // ids à traiter
+    index: 0,
+    currentProposal: null,  // {value, peakStart, peakEnd, reasoning}
+    currentBottleId: null
   }
 };
 
@@ -714,14 +792,12 @@ function mat(b) {
   return                             { c:'m-wt',   l:'Attendre' };
 }
 
-/* Retourne true si peakStart est atteint et la bouteille n'est pas en zone urgente */
 function isInFenetre(b) {
   if (!b.peakStart || !b.peakEnd) return false;
   const y = new Date().getFullYear();
   return b.peakStart <= y && b.peakEnd > y + 1;
 }
 
-/* Retourne true si la bouteille est urgente (À boire ! ou En retard) */
 function isUrgente(b) {
   const m = mat(b);
   return m.c === 'm-rdy' || m.c === 'm-dk';
@@ -729,6 +805,14 @@ function isUrgente(b) {
 
 const totBtl = () => cave.bottles.reduce((s,b) => s + (parseInt(b.quantity)||0), 0);
 const totVal = () => cave.bottles.reduce((s,b) => s + (parseFloat(b.value)||0) * (parseInt(b.quantity)||0), 0);
+
+/* Bouteilles incomplètes pour estimation */
+function needsEstimation(b) {
+  return !b.value || !b.peakStart || !b.peakEnd;
+}
+function bottlesNeedingEstimation() {
+  return cave.bottles.filter(needsEstimation);
+}
 
 /* ── TOAST ── */
 let _tt;
@@ -899,7 +983,7 @@ function goTo(p) {
   if (p==='ai') renderRecoContext();
   if (p==='historique') renderHist();
   if (p==='stats') renderStats();
-  if (p==='settings') { updateApiStatus(); loadPrefsToForm(); }
+  if (p==='settings') { updateApiStatus(); loadPrefsToForm(); renderBatchCard(); }
 }
 
 /* ── RENDER ── */
@@ -1058,14 +1142,20 @@ function openAdd() {
   resetPhoto();
   clearForm();
   setTGL('tgl-format','bouteille'); setTGL('tgl-loc','grande');
+  hideAiSuggestions();
   openM('m-add');
 }
 
 function clearForm() {
   ['f-producer','f-cuvee','f-region','f-appellation','f-vintage','f-grapes','f-value','f-abv','f-ps','f-pe']
-    .forEach(id=>document.getElementById(id).value='');
+    .forEach(id=>{ const e=document.getElementById(id); e.value=''; e.classList.remove('ai-suggested'); });
   document.getElementById('f-qty').value=1;
   ['tgl-color','tgl-format','tgl-loc'].forEach(id=>document.querySelectorAll(`#${id} .tgl`).forEach(b=>b.classList.remove('on')));
+}
+
+function hideAiSuggestions() {
+  document.getElementById('ai-estimate-reasoning-box').style.display = 'none';
+  ['f-value','f-ps','f-pe'].forEach(id => document.getElementById(id).classList.remove('ai-suggested'));
 }
 
 function resetPhoto() {
@@ -1080,6 +1170,7 @@ function editBottle() {
   document.getElementById('m-add-title').innerHTML = 'Modifier la <em>bouteille</em>';
   document.getElementById('m-add-tabs').style.display = 'none';
   switchTab('manual');
+  hideAiSuggestions();
   document.getElementById('f-producer').value   = b.producer||'';
   document.getElementById('f-cuvee').value       = b.cuvee||'';
   document.getElementById('f-region').value      = b.region||'';
@@ -1122,6 +1213,8 @@ function saveBottle() {
 function openDetail(id) {
   const b=cave.bottles.find(x=>x.id===id); if(!b) return;
   ui.currentId = id; const m=mat(b);
+  const missing = needsEstimation(b);
+  document.getElementById('btn-detail-estimate').style.display = missing ? 'inline-block' : 'none';
   document.getElementById('detail-body').innerHTML = `
     <div class="dtitle">${esc(b.cuvee||b.appellation||b.producer)}</div>
     <div class="dsub">${esc(b.producer)}${b.region?' · '+esc(b.region):''}${b.vintage?' · '+b.vintage:''}</div>
@@ -1132,8 +1225,8 @@ function openDetail(id) {
       <div><div class="dlbl">Cépage(s)</div><div class="dval">${esc(b.grapes||'—')}</div></div>
       <div><div class="dlbl">Alcool</div><div class="dval">${b.abv ? b.abv + ' %' : '—'}</div></div>
       <div><div class="dlbl">Quantité</div><div class="dval big">${b.quantity}</div></div>
-      <div><div class="dlbl">Valeur</div><div class="dval big">${fEur(b.value)}</div></div>
-      <div><div class="dlbl">Apogée</div><div class="dval">${b.peakStart||'?'} — ${b.peakEnd||'?'}</div></div>
+      <div><div class="dlbl">Valeur</div><div class="dval ${b.value?'big':'missing'}">${b.value?fEur(b.value):'à estimer'}</div></div>
+      <div><div class="dlbl">Apogée</div><div class="dval ${(b.peakStart||b.peakEnd)?'':'missing'}">${b.peakStart||b.peakEnd?(b.peakStart||'?')+' — '+(b.peakEnd||'?'):'à estimer'}</div></div>
       <div><div class="dlbl">Maturité</div><div class="dval"><span class="mbadge ${m.c}">${m.l}</span></div></div>
       <div class="dfull"><div class="dlbl">Emplacement</div><div class="dval" style="color:var(--bordeaux)">${LOC[b.location]||'—'}</div></div>
     </div>`;
@@ -1145,6 +1238,17 @@ function delBottle() {
   if(!b||!confirm(`Supprimer "${esc(b.cuvee||b.producer)}" ?`)) return;
   cave.bottles=cave.bottles.filter(x=>x.id!==b.id);
   schedulePush(); closeM('m-detail'); render(); toast('Bouteille supprimée');
+}
+
+/* Estimer depuis la fiche détail : ouvre l'éditeur puis déclenche l'estimation */
+async function estimateFromDetail() {
+  closeM('m-detail');
+  // Ouvre l'édition
+  editBottle();
+  // Petit délai pour que la modale soit visible et les champs remplis
+  await new Promise(r => setTimeout(r, 200));
+  // Déclenche l'estimation
+  estimatePriceAndPeak();
 }
 
 /* ── SORTIE ── */
@@ -1183,7 +1287,7 @@ function confirmConsume() {
   schedulePush(); closeM('m-consume'); render(); toast(`${qty} bouteille${qty>1?'s':''} sortie${qty>1?'s':''}`);
 }
 
-/* ── PHOTO ── */
+/* ── PHOTO ── EXTRACTION FACTUELLE UNIQUEMENT */
 function doCamera() { document.getElementById('inp-cam').click(); }
 function doUpload() { document.getElementById('inp-upload').click(); }
 
@@ -1197,30 +1301,22 @@ async function onPhoto(event) {
     const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
     const mtype = file.type || 'image/jpeg';
 
-    const prompt = `Tu es un sommelier expert. Analyse cette étiquette de vin et extrais les données.
+    const prompt = `Tu es un sommelier expert. Lis cette étiquette de vin et extrais UNIQUEMENT les informations factuelles visibles ou clairement déductibles.
 
-ESTIMATION D'APOGÉE — RÈGLES STRICTES (mode conservateur / apogée courte) :
-Tu dois estimer peakStart et peakEnd en te basant sur :
-- Le TYPE de vin : un grand cru se garde plus qu'un village ou un générique
-- Le CÉPAGE : Nebbiolo, Cabernet Sauvignon, Syrah = longue garde. Gamay, Sauvignon Blanc, Grenache rosé = courte
-- L'APPELLATION : un Pauillac ou un Barolo se garde 15-20 ans. Un Beaujolais ou Muscadet = 2-5 ans
-- Le MILLÉSIME : les grands millésimes (2005, 2009, 2010, 2015, 2016, 2018, 2019, 2020) se gardent plus longtemps
-- La COULEUR : les rosés = 1-3 ans. Les blancs secs simples = 2-5 ans. Les blancs de garde (Bourgogne, Riesling) = 5-15 ans. Les rouges tanniques = 5-25 ans
-- Le PRODUCTEUR : les domaines prestigieux font des vins de plus longue garde
-
-IMPORTANT : sois CONSERVATEUR. Préfère une fenêtre d'apogée COURTE plutôt que trop longue.
+Ne fais AUCUNE estimation de prix, de valeur ou de potentiel de garde. Ces informations seront demandées dans une étape séparée.
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans backticks, sans texte avant ou après.
 Format exact :
-{"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam","peakStart":null,"peakEnd":null}
-Mets null pour les champs non identifiables.`;
+{"producer":"","cuvee":"","region":"","appellation":"","color":"rouge|blanc|rose","vintage":null,"grapes":"","format":"bouteille|magnum|jeroboam"}
+
+Mets null ou chaîne vide pour les champs non identifiables.`;
 
     const resp = await fetch('/.netlify/functions/claude', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         model: AI_MODEL,
-        max_tokens: 1024,
+        max_tokens: 600,
         messages: [{
           role: 'user',
           content: [
@@ -1246,8 +1342,6 @@ Mets null pour les champs non identifiables.`;
     if(p.appellation) document.getElementById('f-appellation').value  = p.appellation;
     if(p.vintage)     document.getElementById('f-vintage').value      = p.vintage;
     if(p.grapes)      document.getElementById('f-grapes').value       = p.grapes;
-    if(p.peakStart)   document.getElementById('f-ps').value           = p.peakStart;
-    if(p.peakEnd)     document.getElementById('f-pe').value           = p.peakEnd;
     if(p.color   && ['rouge','blanc','rose'].includes(p.color))           setTGL('tgl-color', p.color);
     if(p.format  && ['bouteille','magnum','jeroboam'].includes(p.format)) setTGL('tgl-format', p.format);
     else setTGL('tgl-format','bouteille');
@@ -1258,7 +1352,7 @@ Mets null pour les champs non identifiables.`;
     document.getElementById('p-load').style.display = 'none';
     document.getElementById('p-done').style.display = 'block';
     switchTab('manual');
-    toast('Données extraites — vérifie et enregistre');
+    toast('Étiquette lue — vérifie puis estime prix & apogée');
 
   } catch(e) {
     document.getElementById('p-load').style.display = 'none';
@@ -1269,12 +1363,309 @@ Mets null pour les champs non identifiables.`;
 }
 
 /* ═══════════════════════════════════════════════════════
+   ── ESTIMATION PRIX & APOGÉE ──
+   Appel unique basé sur les données validées du formulaire
+   ═══════════════════════════════════════════════════════ */
+
+/* Construit le payload à envoyer à l'IA depuis un objet vin */
+function buildEstimationPayload(b) {
+  return {
+    producer: b.producer || '',
+    cuvee: b.cuvee || '',
+    region: b.region || '',
+    appellation: b.appellation || '',
+    color: b.color || '',
+    vintage: b.vintage || null,
+    grapes: b.grapes || '',
+    format: b.format || 'bouteille',
+    abv: b.abv || null
+  };
+}
+
+/* Appel IA pour estimer prix + apogée. Retourne {value, peakStart, peakEnd, reasoning} */
+async function callEstimationAPI(wineData) {
+  const currentYear = new Date().getFullYear();
+  const prompt = `Tu es un sommelier expert. Estime le prix actuel au détail (en euros, marché français) et la fenêtre d'apogée pour le vin suivant.
+
+# DONNÉES DU VIN (validées par l'utilisateur)
+${JSON.stringify(wineData, null, 2)}
+
+# RÈGLES STRICTES POUR L'APOGÉE
+- Sois CONSERVATEUR : préfère une fenêtre courte plutôt que trop longue.
+- Tiens compte de TOUS les facteurs : type/qualité du vin, cépage, appellation, millésime, couleur, producteur.
+- Exemples de durées typiques :
+  • Rosé simple : apogée 1-3 ans après vendanges
+  • Blanc sec simple : 2-5 ans
+  • Blanc de garde (grand Bourgogne, Riesling Grand Cru) : 5-15 ans
+  • Rouge léger (Beaujolais village, Pinot Noir simple) : 2-5 ans
+  • Rouge structuré (Bordeaux cru bourgeois, Côtes-du-Rhône village) : 5-12 ans
+  • Grand rouge tannique (cru classé Médoc, Barolo, grand Bourgogne) : 10-25 ans
+  • Champagne non millésimé : 2-6 ans après dégorgement
+  • Champagne millésimé : 8-20 ans
+
+# RÈGLES POUR LE PRIX
+- Prix actuel approximatif au détail en France (caviste, prix moyen), en euros.
+- Si le vin est très rare/cher (cru classé prestigieux, DRC, Rayas, etc.), indique le prix réaliste même s'il est élevé.
+- Si tu ne reconnais pas du tout le producteur ou la cuvée, base-toi sur l'appellation et le profil général.
+
+# FORMAT DE RÉPONSE
+Réponds UNIQUEMENT avec ce JSON, sans markdown ni texte autour :
+{
+  "value": <nombre entier en euros, ou null si vraiment impossible à estimer>,
+  "peakStart": <année>,
+  "peakEnd": <année>,
+  "reasoning": "<1-2 phrases courtes expliquant ton raisonnement : qualité, durée de garde, ordre de prix>"
+}
+
+L'année actuelle est ${currentYear}.`;
+
+  const resp = await fetch('/.netlify/functions/claude', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      max_tokens: 600,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  if (!resp.ok) {
+    const body = await resp.text();
+    throw new Error(`Erreur ${resp.status} — ${body.slice(0, 200)}`);
+  }
+  const data = await resp.json();
+  const txt = (data.content[0].text || '').trim().replace(/```json|```/g, '').trim();
+  return JSON.parse(txt);
+}
+
+/* Bouton "Estimer" dans la modale ajout/édit : utilise les valeurs courantes du formulaire */
+async function estimatePriceAndPeak() {
+  const producer = gv('f-producer');
+  const color = getTGL('tgl-color');
+  if (!producer || !color) {
+    toast('Producteur et couleur sont requis pour l\'estimation', true);
+    return;
+  }
+
+  const btn = document.getElementById('btn-estimate');
+  const originalContent = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spin"></span>Estimation…';
+
+  try {
+    const wineData = {
+      producer,
+      cuvee: gv('f-cuvee'),
+      region: gv('f-region'),
+      appellation: gv('f-appellation'),
+      color,
+      vintage: parseInt(gv('f-vintage')) || null,
+      grapes: gv('f-grapes'),
+      format: getTGL('tgl-format') || 'bouteille',
+      abv: parseFloat(gv('f-abv')) || null
+    };
+
+    const est = await callEstimationAPI(wineData);
+
+    // Pré-remplit les champs et les marque "suggéré par IA"
+    if (est.value !== null && est.value !== undefined) {
+      const elV = document.getElementById('f-value');
+      elV.value = est.value;
+      elV.classList.add('ai-suggested');
+    }
+    if (est.peakStart) {
+      const elS = document.getElementById('f-ps');
+      elS.value = est.peakStart;
+      elS.classList.add('ai-suggested');
+    }
+    if (est.peakEnd) {
+      const elE = document.getElementById('f-pe');
+      elE.value = est.peakEnd;
+      elE.classList.add('ai-suggested');
+    }
+
+    // Affiche le raisonnement
+    if (est.reasoning) {
+      document.getElementById('ai-estimate-reasoning-text').textContent = est.reasoning;
+      document.getElementById('ai-estimate-reasoning-box').style.display = 'block';
+    }
+
+    toast('Estimation reçue — vérifie et ajuste si besoin');
+  } catch (e) {
+    toast('Erreur estimation : ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalContent;
+  }
+}
+
+/* Retire le marquage "ai-suggested" dès que l'utilisateur modifie un champ */
+['f-value', 'f-ps', 'f-pe'].forEach(id => {
+  document.getElementById(id).addEventListener('input', e => e.target.classList.remove('ai-suggested'));
+});
+
+/* ═══════════════════════════════════════════════════════
+   ── ESTIMATION PAR LOT ──
+   ═══════════════════════════════════════════════════════ */
+
+function renderBatchCard() {
+  const need = bottlesNeedingEstimation();
+  document.getElementById('batch-counter').textContent = need.length;
+  const btn = document.getElementById('batch-launch-btn');
+  btn.disabled = need.length === 0;
+  const preview = document.getElementById('batch-preview');
+  if (!need.length) {
+    preview.innerHTML = '<div style="font-size:10px;color:var(--muted);font-style:italic">Toutes les bouteilles ont un prix et une apogée. ✓</div>';
+  } else {
+    const sample = need.slice(0, 3);
+    let html = '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">Aperçu (premières bouteilles à traiter) :</div>';
+    sample.forEach(b => {
+      const missing = [];
+      if (!b.value) missing.push('prix');
+      if (!b.peakStart || !b.peakEnd) missing.push('apogée');
+      html += `<div class="batch-item">
+        <div class="batch-item-info">
+          <div class="batch-item-name">${esc(b.cuvee || b.appellation || b.producer)}</div>
+          <div class="batch-item-meta">${esc(b.producer)}${b.vintage ? ' · ' + b.vintage : ''}${b.region ? ' · ' + esc(b.region) : ''}</div>
+        </div>
+        <div class="batch-item-missing">manque : ${missing.join(' + ')}</div>
+      </div>`;
+    });
+    if (need.length > 3) {
+      html += `<div style="font-size:10px;color:var(--muted);text-align:center;padding:4px;font-style:italic">…et ${need.length - 3} autre${need.length - 3 > 1 ? 's' : ''}</div>`;
+    }
+    preview.innerHTML = html;
+  }
+}
+
+function openBatchEstimate() {
+  const queue = bottlesNeedingEstimation().map(b => b.id);
+  if (!queue.length) { toast('Rien à estimer'); return; }
+  ui.batchState = { queue, index: 0, currentProposal: null, currentBottleId: null };
+  openM('m-batch');
+  batchProcessNext();
+}
+
+function closeBatch() {
+  closeM('m-batch');
+  ui.batchState = { queue: [], index: 0, currentProposal: null, currentBottleId: null };
+  renderBatchCard();
+  render();
+}
+
+async function batchProcessNext() {
+  const st = ui.batchState;
+  if (st.index >= st.queue.length) {
+    // Terminé
+    document.getElementById('batch-current').innerHTML = `<div class="empty">
+      <div class="empty-title">Terminé ✦</div>
+      <div class="empty-sub">${st.queue.length} bouteille${st.queue.length>1?'s':''} traitée${st.queue.length>1?'s':''}</div>
+    </div>`;
+    document.getElementById('batch-progress').textContent = `${st.queue.length} / ${st.queue.length}`;
+    document.getElementById('batch-accept-btn').disabled = true;
+    setTimeout(() => closeBatch(), 1800);
+    return;
+  }
+
+  const bottleId = st.queue[st.index];
+  const b = cave.bottles.find(x => x.id === bottleId);
+  if (!b) { st.index++; return batchProcessNext(); }
+
+  st.currentBottleId = bottleId;
+  st.currentProposal = null;
+  document.getElementById('batch-accept-btn').disabled = true;
+  document.getElementById('batch-progress').textContent = `Bouteille ${st.index + 1} / ${st.queue.length}`;
+
+  const missing = [];
+  if (!b.value) missing.push('prix');
+  if (!b.peakStart || !b.peakEnd) missing.push('apogée');
+
+  document.getElementById('batch-current').innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:2px">${esc(b.cuvee || b.appellation || b.producer)}</div>
+      <div style="font-size:10px;color:var(--muted)">${esc(b.producer)}${b.vintage ? ' · ' + b.vintage : ''}${b.region ? ' · ' + esc(b.region) : ''} · ${COL[b.color] || ''}</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:4px;letter-spacing:.1em;text-transform:uppercase">À compléter : ${missing.join(' + ')}</div>
+    </div>
+    <div class="ai-wrap" style="padding:24px 0">
+      <div class="ai-spin"></div>
+      <div class="ai-txt">Le sommelier estime…</div>
+    </div>`;
+
+  try {
+    const est = await callEstimationAPI(buildEstimationPayload(b));
+    st.currentProposal = est;
+    renderBatchProposal(b, est);
+    document.getElementById('batch-accept-btn').disabled = false;
+  } catch (e) {
+    document.getElementById('batch-current').innerHTML += `<div style="color:#c0392b;font-size:11px;margin-top:8px">Erreur : ${esc(e.message)}</div>
+      <div style="text-align:center;margin-top:10px"><button class="btn btn-ghost" onclick="batchSkip()">Passer cette bouteille</button></div>`;
+  }
+}
+
+function renderBatchProposal(b, est) {
+  const currentYear = new Date().getFullYear();
+  document.getElementById('batch-current').innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:2px">${esc(b.cuvee || b.appellation || b.producer)}</div>
+      <div style="font-size:10px;color:var(--muted)">${esc(b.producer)}${b.vintage ? ' · ' + b.vintage : ''}${b.region ? ' · ' + esc(b.region) : ''} · ${COL[b.color] || ''}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="fg">
+        <label class="flbl">Valeur (€) <span class="ai-tag">IA</span></label>
+        <input class="finput ai-suggested" type="number" id="batch-value" value="${est.value || ''}" min="0" step="1">
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">Actuel : ${b.value ? b.value + ' €' : '—'}</div>
+      </div>
+      <div class="fg">
+        <label class="flbl">Apogée début <span class="ai-tag">IA</span></label>
+        <input class="finput ai-suggested" type="number" id="batch-ps" value="${est.peakStart || ''}" min="1900" max="2100">
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">Actuel : ${b.peakStart || '—'}</div>
+      </div>
+      <div class="fg">
+        <label class="flbl">Apogée fin <span class="ai-tag">IA</span></label>
+        <input class="finput ai-suggested" type="number" id="batch-pe" value="${est.peakEnd || ''}" min="1900" max="2100">
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">Actuel : ${b.peakEnd || '—'}</div>
+      </div>
+      <div class="fg" style="justify-content:flex-end">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Année actuelle : ${currentYear}</div>
+      </div>
+    </div>
+
+    ${est.reasoning ? `<div class="ai-estimate-reasoning"><strong>Raisonnement</strong>${esc(est.reasoning)}</div>` : ''}
+
+    <div style="font-size:10px;color:var(--muted);margin-top:10px;font-style:italic">Modifie librement avant de valider, ou passe cette bouteille si l'estimation ne convient pas.</div>
+  `;
+}
+
+function batchAccept() {
+  const st = ui.batchState;
+  if (!st.currentBottleId || !st.currentProposal) return;
+  const b = cave.bottles.find(x => x.id === st.currentBottleId);
+  if (!b) { st.index++; return batchProcessNext(); }
+
+  const v = parseFloat(document.getElementById('batch-value').value);
+  const ps = parseInt(document.getElementById('batch-ps').value);
+  const pe = parseInt(document.getElementById('batch-pe').value);
+
+  if (!isNaN(v) && v > 0) b.value = v;
+  if (!isNaN(ps)) b.peakStart = ps;
+  if (!isNaN(pe)) b.peakEnd = pe;
+
+  schedulePush();
+  st.index++;
+  batchProcessNext();
+}
+
+function batchSkip() {
+  ui.batchState.index++;
+  batchProcessNext();
+}
+
+/* ═══════════════════════════════════════════════════════
    ── RECO IA — FLOW EN 2 ÉTAPES ──
    ═══════════════════════════════════════════════════════ */
 
 function setQ(t) {
   document.getElementById('reco-q').value = t;
-  // Reset le flow si on change la question
   resetRecoFlow();
 }
 
@@ -1286,7 +1677,6 @@ function resetRecoFlow() {
   btn.onclick = startReco;
 }
 
-/* Bandeau de contexte */
 function renderRecoContext() {
   const banner = document.getElementById('reco-context-banner');
   if (!banner) return;
@@ -1306,7 +1696,6 @@ function renderRecoContext() {
   banner.innerHTML = `<div class="reco-context">L'IA s'appuie sur : <strong>${parts.join(' · ')}</strong></div>`;
 }
 
-/* ── ÉTAPE 1 : Génération des questions d'affinage ── */
 async function startReco() {
   const q = gv('reco-q');
   if (!q) { toast('Décris l\'occasion', true); return; }
@@ -1317,7 +1706,6 @@ async function startReco() {
   document.getElementById('reco-results').innerHTML = `<div class="ai-wrap"><div class="ai-spin"></div><div class="ai-txt">L'IA prépare ses questions…</div></div>`;
 
   try {
-    // Construire les deux pools en JS avant d'appeler l'IA
     const pools = buildCandidatePools();
     ui.recoState.candidatesPools = pools;
     ui.recoState.initialQuery = q;
@@ -1389,7 +1777,6 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
   }
 }
 
-/* Affiche les questions avec chips cliquables */
 function renderQuestions() {
   const btn = document.getElementById('reco-btn');
   btn.textContent = 'Recommander →';
@@ -1416,56 +1803,33 @@ function renderQuestions() {
 
 function selectAnswer(qi, value, el) {
   ui.recoState.questions[qi].selected = value;
-  // Met à jour le visuel
   const block = el.closest('.question-block');
   block.querySelectorAll('.q-chip').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
 }
 
-/* Construit les deux pools de candidats en JS */
 function buildCandidatePools() {
   const urgentes = cave.bottles
     .filter(b => isUrgente(b) && parseInt(b.quantity) > 0)
     .map(b => ({
-      id: b.id,
-      producer: b.producer,
-      cuvee: b.cuvee,
-      appellation: b.appellation,
-      region: b.region,
-      color: b.color,
-      vintage: b.vintage,
-      grapes: b.grapes,
-      format: b.format,
-      quantity: b.quantity,
-      value: b.value,
-      peakStart: b.peakStart,
-      peakEnd: b.peakEnd,
-      maturity: mat(b).l
+      id: b.id, producer: b.producer, cuvee: b.cuvee, appellation: b.appellation,
+      region: b.region, color: b.color, vintage: b.vintage, grapes: b.grapes,
+      format: b.format, quantity: b.quantity, value: b.value,
+      peakStart: b.peakStart, peakEnd: b.peakEnd, maturity: mat(b).l
     }));
 
   const fenetre = cave.bottles
     .filter(b => isInFenetre(b) && parseInt(b.quantity) > 0)
     .map(b => ({
-      id: b.id,
-      producer: b.producer,
-      cuvee: b.cuvee,
-      appellation: b.appellation,
-      region: b.region,
-      color: b.color,
-      vintage: b.vintage,
-      grapes: b.grapes,
-      format: b.format,
-      quantity: b.quantity,
-      value: b.value,
-      peakStart: b.peakStart,
-      peakEnd: b.peakEnd,
-      maturity: mat(b).l
+      id: b.id, producer: b.producer, cuvee: b.cuvee, appellation: b.appellation,
+      region: b.region, color: b.color, vintage: b.vintage, grapes: b.grapes,
+      format: b.format, quantity: b.quantity, value: b.value,
+      peakStart: b.peakStart, peakEnd: b.peakEnd, maturity: mat(b).l
     }));
 
   return { urgentes, fenetre };
 }
 
-/* ── ÉTAPE 2 : Génération des 6 recommandations ── */
 async function runReco() {
   const btn = document.getElementById('reco-btn');
   btn.disabled = true;
@@ -1503,11 +1867,9 @@ ${ctx.recentConsumption.length ? JSON.stringify(ctx.recentConsumption, null, 2) 
 Date : ${ctx.today} — ${ctx.dayOfWeek} — ${ctx.season}
 
 # POOL 1 — URGENTES (À boire maintenant — peakEnd imminent ou dépassé)
-Ces bouteilles sont à leur pic ou au-delà, il est temps de les ouvrir.
 ${pools.urgentes.length ? JSON.stringify(pools.urgentes) : '[]'}
 
 # POOL 2 — EN FENÊTRE (peakStart atteint, peakEnd encore loin)
-Ces bouteilles sont accessibles mais peuvent encore attendre. On peut les ouvrir maintenant avec plaisir.
 ${pools.fenetre.length ? JSON.stringify(pools.fenetre) : '[]'}
 
 # RÈGLES DE SÉLECTION STRICTES
@@ -1555,7 +1917,6 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
       html += `<div class="reco-analysis"><strong>Analyse du sommelier</strong>${esc(reco.analysis)}</div>`;
     }
 
-    // BLOC URGENTES
     const urgentesCards = (reco.urgentes || []).map(r => {
       const b = cave.bottles.find(x => x.id === r.id);
       return b ? recoCard(b, r.rationale, 'urgente') : '';
@@ -1576,7 +1937,6 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
       html += `<div class="reco-bloc"><div class="reco-bloc-hdr urgente"><span style="font-size:16px">🔴</span><div><div class="reco-bloc-title">À ouvrir maintenant</div></div></div><div style="font-size:11px;color:var(--muted);padding:12px 0;font-style:italic">Aucune bouteille urgente dans ta cave pour cette demande.</div></div>`;
     }
 
-    // BLOC FENÊTRE
     const fenetreCards = (reco.fenetre || []).map(r => {
       const b = cave.bottles.find(x => x.id === r.id);
       return b ? recoCard(b, r.rationale, 'fenetre') : '';
@@ -1597,7 +1957,6 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
       html += `<div class="reco-bloc"><div class="reco-bloc-hdr fenetre"><span style="font-size:16px">🟡</span><div><div class="reco-bloc-title">En fenêtre</div></div></div><div style="font-size:11px;color:var(--muted);padding:12px 0;font-style:italic">Aucune bouteille en fenêtre d'apogée pour cette demande.</div></div>`;
     }
 
-    // Bouton recommencer
     html += `<div style="text-align:center;margin-top:8px">
       <button class="btn btn-ghost" onclick="resetRecoFlow()" style="font-size:9px">↺ Nouvelle recherche</button>
     </div>`;
@@ -1647,7 +2006,6 @@ function recoCard(b, txt, bloc) {
   </div>`;
 }
 
-/* Contexte enrichi pour le prompt */
 function buildRecoContext() {
   const recent = [...cave.history]
     .sort((a,b) => (b.date||'').localeCompare(a.date||''))
