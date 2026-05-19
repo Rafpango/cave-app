@@ -21,7 +21,7 @@
       --safe-b: env(safe-area-inset-bottom, 0px);
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'DM Mono', monospace; background: var(--cream); color: var(--ink); min-height: 100vh; -webkit-text-size-adjust: 100%; }
+    body { font-family: 'DM Mono', monospace; background: var(--cream); color: var(--ink); min-height: 100vh; -webkit-text-size-adjust: 100%; overflow-x: hidden; }
     input, button, select, textarea { font-family: inherit; }
     .hidden { display: none !important; }
     .page { display: none; }
@@ -63,7 +63,7 @@
     .chip:hover { border-color: var(--bordeaux); color: var(--bordeaux); }
     .chip.on { background: var(--bordeaux); border-color: var(--bordeaux); color: #fff; }
     .cdot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
-    #main { flex: 1; padding: 16px; overflow: auto; }
+    #main { flex: 1; min-width: 0; padding: 16px; overflow: auto; }
 
     /* ── STAT CARDS ── */
     .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
@@ -91,6 +91,7 @@
     .btn-ai { background: transparent; border: 1px solid var(--gold); color: #8a6a00; }
     .btn-ai:hover:not(:disabled) { background: var(--gold); color: #fff; }
     .btn-spin { display: inline-block; width: 10px; height: 10px; border: 1.5px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; margin-right: 6px; }
+    .btn-filters-mobile { display: none; }
 
     /* ── ESTIMATION IA ── */
     .finput.ai-suggested { background: #fffbf0; border-color: var(--gold); }
@@ -296,6 +297,7 @@
       .topbar-nav button { padding: 5px 8px; font-size: 8px; flex-shrink: 0; }
       #app-body { min-height: calc(100vh - 80px); }
       #sidebar { display: none; }
+      .btn-filters-mobile { display: inline-block; }
       #main { padding: 10px; }
       .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
       .fgrid { grid-template-columns: 1fr; }
@@ -313,6 +315,7 @@
     }
     @media (min-width: 601px) and (max-width: 900px) {
       #sidebar { display: none; }
+      .btn-filters-mobile { display: inline-block; }
       .stat-grid { grid-template-columns: repeat(3, 1fr) !important; }
       div[style*="grid-template-columns:repeat(3"] { grid-template-columns: repeat(2,1fr) !important; }
     }
@@ -377,6 +380,7 @@
             <span class="search-icon">🔍</span>
             <input type="text" id="search-input" placeholder="Rechercher…" oninput="renderTable()">
           </div>
+          <button class="btn btn-ghost btn-filters-mobile" onclick="openFiltersPanel()" style="font-size:9px">⚲ Filtres</button>
           <button class="btn btn-ghost" onclick="resetFilters()" style="font-size:9px">Réinit.</button>
           <button class="btn btn-prim" onclick="openAdd()">+ Ajouter</button>
         </div>
@@ -735,6 +739,23 @@
   </div>
 </div>
 
+<!-- ══ PANNEAU FILTRES (MOBILE) ══ -->
+<div class="overlay" id="m-filters">
+  <div class="mbox" style="max-width:480px">
+    <div class="mhdr">
+      <div class="mtitle">Filtrer la <em>cave</em></div>
+      <button class="mclose" onclick="closeM('m-filters')">×</button>
+    </div>
+    <div class="mbody">
+      <div id="sidebar-mobile"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" onclick="resetFilters();closeM('m-filters')">Tout réinitialiser</button>
+      <button class="btn btn-prim" onclick="closeM('m-filters')">Voir les résultats</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1027,7 +1048,7 @@ function renderSidebar() {
   const regs = Object.entries(rc).sort((a,b)=>b[1]-a[1]);
   const vints = Object.keys(vc).map(Number).sort((a,b)=>b-a);
   const cdot = { rouge:'var(--red)', blanc:'#c8a84c', rose:'var(--rose)' };
-  document.getElementById('sidebar').innerHTML = `
+  const sidebarHTML = `
     <div class="sb-section"><div class="sb-title">Couleur</div><div class="sb-chips">
       ${['rouge','blanc','rose'].map(c=>`<button class="chip ${ui.filters.color===c?'on':''}" onclick="setF('color','${c}')"><span><span class="cdot" style="background:${cdot[c]}"></span>${COL[c]}</span><span style="font-size:8px;opacity:.6">${cc[c]||0}</span></button>`).join('')}
     </div></div>
@@ -1046,8 +1067,12 @@ function renderSidebar() {
       <button class="chip ${ui.filters.maturity==='m-wt'?'on':''}"  onclick="setF('maturity','m-wt')">Attendre <span style="font-size:8px;opacity:.6">${mc['m-wt']}</span></button>
       <button class="chip ${ui.filters.maturity==='m-dk'?'on':''}"  onclick="setF('maturity','m-dk')">En retard <span style="font-size:8px;opacity:.6">${mc['m-dk']}</span></button>
     </div></div>`;
+  document.getElementById('sidebar').innerHTML = sidebarHTML;
+  const sbMobile = document.getElementById('sidebar-mobile');
+  if (sbMobile) sbMobile.innerHTML = sidebarHTML;
 }
 
+function openFiltersPanel() { renderSidebar(); openM('m-filters'); }
 function setF(k,v) { ui.filters[k]=ui.filters[k]===v?null:v; render(); }
 function resetFilters() { ui.filters={color:null,region:null,maturity:null,location:null,vintage:null,format:null}; document.getElementById('search-input').value=''; render(); }
 
