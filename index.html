@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -760,18 +759,16 @@ let ui   = {
   sort: { field: 'producer', dir: 'asc' },
   online: navigator.onLine, pendingPush: false,
   consumeRating: null,
-  // État du flow IA en 2 étapes
   recoState: {
-    step: 'idle',       // idle | questions | results
+    step: 'idle',
     initialQuery: '',
-    questions: [],      // [{question, choices:[{label,value}], selected:null}]
+    questions: [],
     candidatesPools: null
   },
-  // État estimation par lot
   batchState: {
-    queue: [],          // ids à traiter
+    queue: [],
     index: 0,
-    currentProposal: null,  // {value, peakStart, peakEnd, reasoning}
+    currentProposal: null,
     currentBottleId: null
   }
 };
@@ -791,14 +788,12 @@ function mat(b) {
   return                             { c:'m-wt',   l:'Attendre' };
 }
 
-/* Retourne true si peakStart est atteint et la bouteille n'est pas en zone urgente */
 function isInFenetre(b) {
   if (!b.peakStart || !b.peakEnd) return false;
   const y = new Date().getFullYear();
   return b.peakStart <= y && b.peakEnd > y + 1;
 }
 
-/* Retourne true si la bouteille est urgente (À boire ! ou En retard) */
 function isUrgente(b) {
   const m = mat(b);
   return m.c === 'm-rdy' || m.c === 'm-dk';
@@ -807,7 +802,6 @@ function isUrgente(b) {
 const totBtl = () => cave.bottles.reduce((s,b) => s + (parseInt(b.quantity)||0), 0);
 const totVal = () => cave.bottles.reduce((s,b) => s + (parseFloat(b.value)||0) * (parseInt(b.quantity)||0), 0);
 
-/* Bouteilles incomplètes pour estimation */
 function needsEstimation(b) {
   return !b.value || !b.peakStart || !b.peakEnd;
 }
@@ -1316,28 +1310,18 @@ Format exact :
 
 Mets null ou chaîne vide pour les champs non identifiables.`;
 
-    const resp = await fetch('/.netlify/functions/claude', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mtype, data: base64 } },
-            { type: 'text', text: prompt }
-          ]
-        }]
-      })
-    });
+    const data = await claudeFetch({
+      model: AI_MODEL,
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mtype, data: base64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    }, { onRetry: (n, max) => toast(`API occupée — nouvelle tentative ${n}/${max}…`) });
 
-    if (!resp.ok) {
-      const body = await resp.text();
-      throw new Error(`Erreur ${resp.status} — ${body.slice(0,300)}`);
-    }
-
-    const data = await resp.json();
     const txt  = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
     const p    = JSON.parse(txt);
 
@@ -1368,10 +1352,57 @@ Mets null ou chaîne vide pour les champs non identifiables.`;
 }
 
 /* ═══════════════════════════════════════════════════════
+   ── APPEL API CLAUDE avec RETRY + BACKOFF ──
+   Gère 529 (surcharge), 503, 429, timeouts Netlify (502/504)
+   et erreurs réseau. Réessaie 3× : 1s, 2s, 4s.
+   ═══════════════════════════════════════════════════════ */
+async function claudeFetch(payload, opts) {
+  opts = opts || {};
+  const maxRetries = opts.maxRetries != null ? opts.maxRetries : 3;
+  const onRetry = opts.onRetry || null;
+  let lastErr = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const resp = await fetch('/.netlify/functions/claude', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (resp.ok) return await resp.json();
+
+      if ((resp.status === 529 || resp.status === 503 || resp.status === 429) && attempt < maxRetries) {
+        const waitMs = 1000 * Math.pow(2, attempt);
+        if (onRetry) onRetry(attempt + 1, maxRetries, resp.status);
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      const body = await resp.text();
+      const label = resp.status === 529 ? 'API Claude surchargée — réessaie dans un instant'
+                  : resp.status === 503 ? 'API Claude momentanément indisponible'
+                  : resp.status === 429 ? 'Trop de requêtes — patiente un peu'
+                  : (resp.status === 502 || resp.status === 504) ? 'Délai dépassé côté serveur (la recherche web a peut-être pris trop de temps — voir timeout Netlify)'
+                  : `Erreur ${resp.status}`;
+      throw new Error(`${label} (${resp.status})${body ? ' — ' + body.slice(0, 160) : ''}`);
+    } catch (e) {
+      lastErr = e;
+      const isNetwork = e instanceof TypeError;
+      if (isNetwork && attempt < maxRetries) {
+        const waitMs = 1000 * Math.pow(2, attempt);
+        if (onRetry) onRetry(attempt + 1, maxRetries, 'réseau');
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      throw lastErr;
+    }
+  }
+  throw lastErr || new Error('Échec de l\'appel API');
+}
+
+/* ═══════════════════════════════════════════════════════
    ── ESTIMATION PRIX & APOGÉE ──
-   Appel unique basé sur les données validées du formulaire.
-   Prix : appuyé sur cuvée + producteur + millésime + recherche en ligne.
-   Apogée : fenêtre de CONSOMMATION (début = quand commencer, fin = limite à ne pas oublier).
+   Prix : recherche web réelle (cuvée + producteur + millésime).
+   Apogée : fenêtre de CONSOMMATION (début = quand commencer,
+            fin = limite à ne pas oublier).
    ═══════════════════════════════════════════════════════ */
 
 function buildEstimationPayload(b) {
@@ -1395,64 +1426,59 @@ async function callEstimationAPI(wineData) {
 # DONNÉES DU VIN (validées par l'utilisateur)
 ${JSON.stringify(wineData, null, 2)}
 
-# 1. PRIX (le plus important : sois PRÉCIS et DIFFÉRENCIANT)
-Objectif : le prix réel auquel CE vin précis se vend aujourd'hui en France, TTC, chez un caviste ou sur les places de marché en ligne (idealwine, wine-searcher, vinatis, millesima, twil, cavistes en ligne).
+# 1. PRIX — MÉTHODE OBLIGATOIRE AVEC RECHERCHE WEB
+Tu disposes d'un outil de recherche web. Tu DOIS l'utiliser avant de donner un prix :
+1. Lance 1 à 3 recherches ciblées combinant producteur + cuvée + appellation + millésime + "prix"
+   (ex : "Château X cuvée Y 2019 prix", "domaine Z appellation prix bouteille").
+2. Privilégie les cavistes et places de marché françaises (idealwine, wine-searcher, vinatis, millesima, twil, plus-de-bulles, cavistes en ligne).
+3. Retiens un prix TTC au détail particulier en France, médian si plusieurs valeurs, ajusté au millésime concerné.
+4. Si rien sur ce vin précis : élargis à la cuvée sans millésime, puis au domaine ; en dernier recours estime via l'appellation + le rang du domaine, et dis-le dans le raisonnement.
+N'invente JAMAIS un prix "prudent" par défaut. Différencie selon : producteur+cuvée exacts (générique / village / 1er cru / grand cru / cuvée prestige), millésime (grand millésime = prime), rareté (DRC, Rayas, Roumier, Rousseau, Leflaive, Coche-Dury, crus classés prestigieux = prix élevés réalistes, ne sous-estime jamais), format (magnum ≈ 2,1-2,4× ; jéroboam ≈ 4,5-5,5×).
 
-Tu DOIS différencier le prix selon, par ordre d'importance :
-- **Le producteur ET la cuvée exacts** : un Bourgogne "Les Amoureuses" de Roumier n'a RIEN à voir avec un Bourgogne générique. Un même village change du tout au tout selon le domaine. Identifie le domaine et son rang (générique / village / 1er cru / grand cru / cuvée parcellaire prestige).
-- **Le millésime** : un grand millésime (ex. 2005, 2009, 2010, 2015, 2016, 2018, 2019, 2020 selon les régions) se paie plus cher qu'un millésime moyen ou difficile. Un millésime rare/ancien d'un grand domaine prend une prime importante.
-- **La rareté** : domaines confidentiels, cuvées en faible production, vins recherchés (DRC, Rayas, Roumier, Rousseau, Leflaive, Coche-Dury, grands crus classés prestigieux) → prix élevés et réalistes, ne sous-estime jamais.
-- **Le format** : magnum ≈ 2,1× à 2,4× le prix bouteille ; jéroboam ≈ 4,5× à 5,5×.
-
-Méthode :
-1. Identifie précisément producteur + cuvée + appellation.
-2. Situe le rang qualitatif et la cote du domaine pour cette cuvée.
-3. Ajuste selon le millésime indiqué (prime ou décote).
-4. Applique le coefficient de format.
-Si le producteur/cuvée est inconnu ou illisible, base-toi sur l'appellation + le profil, mais signale-le brièvement dans le raisonnement. Donne TOUJOURS un nombre, jamais null sauf données vraiment insuffisantes.
-
-# 2. APOGÉE = FENÊTRE DE CONSOMMATION (et NON potentiel de garde maximal théorique)
-Définition stricte à respecter :
-- **peakStart** = l'année à partir de laquelle ce vin (avec ce millésime) commence à être AGRÉABLE à boire : tanins fondus pour un rouge, aromatique ouverte pour un blanc. C'est "à partir de quand je peux commencer à le sortir".
-- **peakEnd** = l'année APRÈS laquelle il vaut mieux ne plus attendre, sous peine de risquer le déclin. C'est "la date à ne pas oublier / la limite avant que ça se gâte".
-Ce n'est PAS la durée de garde extrême. Vise une fenêtre où le vin procure le plus de plaisir, en restant raisonnable plutôt qu'optimiste. Une bouteille "buvable jusqu'en 2050 dans l'absolu" mais idéale 2026–2035 doit afficher 2026 et 2035.
-
-Repères de fenêtre (à pondérer selon producteur, millésime, niveau d'appellation — ce sont des points de départ, pas des cases fixes) :
-- Rosé : fenêtre ~1 à 3 ans après le millésime.
-- Blanc sec simple (Muscadet, petit Sauvignon) : ~2 à 5 ans.
-- Blanc de garde (grand Bourgogne, Riesling GC, Chenin de garde) : ~4 à 15 ans.
-- Rouge léger/fruité (Beaujolais, Pinot simple, Gamay) : ~2 à 6 ans.
-- Rouge structuré (Côtes-du-Rhône village, Bordeaux cru bourgeois, Chianti) : ~4 à 12 ans.
-- Grand rouge de garde (cru classé Médoc/Saint-Émilion, Barolo, grand Bourgogne, Hermitage) : fenêtre de plaisir souvent ~8 à 22 ans, mais le DÉBUT peut être tardif (ex. ne pas ouvrir avant 6–10 ans).
-- Champagne brut sans année : ~2 à 6 ans après achat ; Champagne millésimé : ~6 à 18 ans.
-Un grand millésime décale la fenêtre vers le haut (début plus tardif, fin plus lointaine) ; un petit millésime la raccourcit et l'avance.
+# 2. APOGÉE = FENÊTRE DE CONSOMMATION (PAS le potentiel de garde maximal théorique)
+- **peakStart** = année à partir de laquelle ce vin (ce millésime) commence à être AGRÉABLE à boire : "à partir de quand je peux commencer à le sortir".
+- **peakEnd** = année APRÈS laquelle il ne faut plus attendre sous peine de déclin : "la date à ne pas oublier avant que ça se gâte".
+Vise la fenêtre de plaisir réel, raisonnable plutôt qu'optimiste. Un vin "buvable jusqu'en 2050 dans l'absolu" mais idéal 2026–2035 doit afficher 2026 et 2035.
+Repères (à pondérer selon producteur, millésime, niveau d'appellation) :
+- Rosé : ~1-3 ans après le millésime. Blanc sec simple : ~2-5 ans. Blanc de garde (grand Bourgogne, Riesling GC) : ~4-15 ans.
+- Rouge léger (Beaujolais, Pinot simple) : ~2-6 ans. Rouge structuré (CdR village, cru bourgeois, Chianti) : ~4-12 ans.
+- Grand rouge de garde (cru classé, Barolo, grand Bourgogne, Hermitage) : fenêtre ~8-22 ans, début parfois tardif (ne pas ouvrir avant 6-10 ans).
+- Champagne brut sans année : ~2-6 ans ; Champagne millésimé : ~6-18 ans.
+Un grand millésime décale la fenêtre vers le haut ; un petit la raccourcit et l'avance.
 
 # ANNÉE ACTUELLE : ${currentYear}
 
 # FORMAT DE RÉPONSE
-Réponds UNIQUEMENT avec ce JSON, sans markdown, sans texte autour :
+Après tes recherches, ta réponse FINALE doit être UNIQUEMENT ce JSON, sans markdown ni texte autour :
 {
   "value": <prix en euros, nombre entier>,
   "peakStart": <année, ex. ${currentYear}>,
   "peakEnd": <année>,
-  "reasoning": "<2-3 phrases : 1) comment tu as situé le prix (domaine, rang, millésime, ordre de grandeur constaté en ligne) ; 2) pourquoi cette fenêtre de consommation>"
+  "reasoning": "<2-3 phrases : 1) le prix retenu + la/les source(s) consultée(s) (nom du site, ordre de grandeur trouvé) ; 2) pourquoi cette fenêtre de consommation>"
 }`;
 
-  const resp = await fetch('/.netlify/functions/claude', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      max_tokens: 800,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
-  if (!resp.ok) {
-    const body = await resp.text();
-    throw new Error(`Erreur ${resp.status} — ${body.slice(0, 200)}`);
+  const data = await claudeFetch({
+    model: AI_MODEL,
+    max_tokens: 1500,
+    messages: [{ role: 'user', content: prompt }],
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }]
+  }, { onRetry: (n, max) => toast(`API occupée — nouvelle tentative ${n}/${max}…`) });
+
+  // Avec web_search, content contient plusieurs blocs (server_tool_use,
+  // web_search_tool_result, text…). On concatène tous les blocs texte
+  // puis on isole l'objet JSON final.
+  const fullText = (data.content || [])
+    .filter(b => b.type === 'text' && typeof b.text === 'string')
+    .map(b => b.text)
+    .join('\n')
+    .trim();
+
+  let txt = fullText.replace(/```json|```/g, '').trim();
+  const first = txt.indexOf('{');
+  const last  = txt.lastIndexOf('}');
+  if (first !== -1 && last !== -1 && last > first) {
+    txt = txt.slice(first, last + 1);
   }
-  const data = await resp.json();
-  const txt = (data.content[0].text || '').trim().replace(/```json|```/g, '').trim();
   return JSON.parse(txt);
 }
 
@@ -1466,7 +1492,7 @@ async function estimatePriceAndPeak() {
   const btn = document.getElementById('btn-estimate');
   const originalContent = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '<span class="btn-spin"></span>Estimation…';
+  btn.innerHTML = '<span class="btn-spin"></span>Recherche en ligne…';
   try {
     const wineData = {
       producer,
@@ -1598,7 +1624,7 @@ async function batchProcessNext() {
     </div>
     <div class="ai-wrap" style="padding:24px 0">
       <div class="ai-spin"></div>
-      <div class="ai-txt">Le sommelier estime…</div>
+      <div class="ai-txt">Le sommelier consulte les prix en ligne…</div>
     </div>`;
   try {
     const est = await callEstimationAPI(buildEstimationPayload(b));
@@ -1670,7 +1696,6 @@ function batchSkip() {
 
 function setQ(t) {
   document.getElementById('reco-q').value = t;
-  // Reset le flow si on change la question
   resetRecoFlow();
 }
 
@@ -1682,7 +1707,6 @@ function resetRecoFlow() {
   btn.onclick = startReco;
 }
 
-/* Bandeau de contexte */
 function renderRecoContext() {
   const banner = document.getElementById('reco-context-banner');
   if (!banner) return;
@@ -1702,7 +1726,6 @@ function renderRecoContext() {
   banner.innerHTML = `<div class="reco-context">L'IA s'appuie sur : <strong>${parts.join(' · ')}</strong></div>`;
 }
 
-/* ── ÉTAPE 1 : Génération des questions d'affinage ── */
 async function startReco() {
   const q = gv('reco-q');
   if (!q) { toast('Décris l\'occasion', true); return; }
@@ -1713,7 +1736,6 @@ async function startReco() {
   document.getElementById('reco-results').innerHTML = `<div class="ai-wrap"><div class="ai-spin"></div><div class="ai-txt">L'IA prépare ses questions…</div></div>`;
 
   try {
-    // Construire les deux pools en JS avant d'appeler l'IA
     const pools = buildCandidatePools();
     ui.recoState.candidatesPools = pools;
     ui.recoState.initialQuery = q;
@@ -1757,19 +1779,12 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
   ]
 }`;
 
-    const resp = await fetch('/.netlify/functions/claude', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 800,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+    const data = await claudeFetch({
+      model: AI_MODEL,
+      max_tokens: 800,
+      messages: [{ role: 'user', content: prompt }]
+    }, { onRetry: (n, max) => toast(`API occupée — nouvelle tentative ${n}/${max}…`) });
 
-    if (!resp.ok) throw new Error(`Erreur ${resp.status}`);
-
-    const data = await resp.json();
     const txt = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
     const parsed = JSON.parse(txt);
 
@@ -1785,7 +1800,6 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
   }
 }
 
-/* Affiche les questions avec chips cliquables */
 function renderQuestions() {
   const btn = document.getElementById('reco-btn');
   btn.textContent = 'Recommander →';
@@ -1812,56 +1826,33 @@ function renderQuestions() {
 
 function selectAnswer(qi, value, el) {
   ui.recoState.questions[qi].selected = value;
-  // Met à jour le visuel
   const block = el.closest('.question-block');
   block.querySelectorAll('.q-chip').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
 }
 
-/* Construit les deux pools de candidats en JS */
 function buildCandidatePools() {
   const urgentes = cave.bottles
     .filter(b => isUrgente(b) && parseInt(b.quantity) > 0)
     .map(b => ({
-      id: b.id,
-      producer: b.producer,
-      cuvee: b.cuvee,
-      appellation: b.appellation,
-      region: b.region,
-      color: b.color,
-      vintage: b.vintage,
-      grapes: b.grapes,
-      format: b.format,
-      quantity: b.quantity,
-      value: b.value,
-      peakStart: b.peakStart,
-      peakEnd: b.peakEnd,
-      maturity: mat(b).l
+      id: b.id, producer: b.producer, cuvee: b.cuvee, appellation: b.appellation,
+      region: b.region, color: b.color, vintage: b.vintage, grapes: b.grapes,
+      format: b.format, quantity: b.quantity, value: b.value,
+      peakStart: b.peakStart, peakEnd: b.peakEnd, maturity: mat(b).l
     }));
 
   const fenetre = cave.bottles
     .filter(b => isInFenetre(b) && parseInt(b.quantity) > 0)
     .map(b => ({
-      id: b.id,
-      producer: b.producer,
-      cuvee: b.cuvee,
-      appellation: b.appellation,
-      region: b.region,
-      color: b.color,
-      vintage: b.vintage,
-      grapes: b.grapes,
-      format: b.format,
-      quantity: b.quantity,
-      value: b.value,
-      peakStart: b.peakStart,
-      peakEnd: b.peakEnd,
-      maturity: mat(b).l
+      id: b.id, producer: b.producer, cuvee: b.cuvee, appellation: b.appellation,
+      region: b.region, color: b.color, vintage: b.vintage, grapes: b.grapes,
+      format: b.format, quantity: b.quantity, value: b.value,
+      peakStart: b.peakStart, peakEnd: b.peakEnd, maturity: mat(b).l
     }));
 
   return { urgentes, fenetre };
 }
 
-/* ── ÉTAPE 2 : Génération des 6 recommandations ── */
 async function runReco() {
   const btn = document.getElementById('reco-btn');
   btn.disabled = true;
@@ -1899,11 +1890,9 @@ ${ctx.recentConsumption.length ? JSON.stringify(ctx.recentConsumption, null, 2) 
 Date : ${ctx.today} — ${ctx.dayOfWeek} — ${ctx.season}
 
 # POOL 1 — URGENTES (À boire maintenant — peakEnd imminent ou dépassé)
-Ces bouteilles sont à leur pic ou au-delà, il est temps de les ouvrir.
 ${pools.urgentes.length ? JSON.stringify(pools.urgentes) : '[]'}
 
 # POOL 2 — EN FENÊTRE (peakStart atteint, peakEnd encore loin)
-Ces bouteilles sont accessibles mais peuvent encore attendre. On peut les ouvrir maintenant avec plaisir.
 ${pools.fenetre.length ? JSON.stringify(pools.fenetre) : '[]'}
 
 # RÈGLES DE SÉLECTION STRICTES
@@ -1929,19 +1918,12 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
   ]
 }`;
 
-    const resp = await fetch('/.netlify/functions/claude', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+    const data = await claudeFetch({
+      model: AI_MODEL,
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: prompt }]
+    }, { onRetry: (n, max) => toast(`API occupée — nouvelle tentative ${n}/${max}…`) });
 
-    if (!resp.ok) throw new Error(`Erreur ${resp.status}`);
-
-    const data = await resp.json();
     const txt  = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
     const reco = JSON.parse(txt);
 
@@ -1951,7 +1933,6 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
       html += `<div class="reco-analysis"><strong>Analyse du sommelier</strong>${esc(reco.analysis)}</div>`;
     }
 
-    // BLOC URGENTES
     const urgentesCards = (reco.urgentes || []).map(r => {
       const b = cave.bottles.find(x => x.id === r.id);
       return b ? recoCard(b, r.rationale, 'urgente') : '';
@@ -1972,7 +1953,6 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
       html += `<div class="reco-bloc"><div class="reco-bloc-hdr urgente"><span style="font-size:16px">🔴</span><div><div class="reco-bloc-title">À ouvrir maintenant</div></div></div><div style="font-size:11px;color:var(--muted);padding:12px 0;font-style:italic">Aucune bouteille urgente dans ta cave pour cette demande.</div></div>`;
     }
 
-    // BLOC FENÊTRE
     const fenetreCards = (reco.fenetre || []).map(r => {
       const b = cave.bottles.find(x => x.id === r.id);
       return b ? recoCard(b, r.rationale, 'fenetre') : '';
@@ -1993,7 +1973,6 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
       html += `<div class="reco-bloc"><div class="reco-bloc-hdr fenetre"><span style="font-size:16px">🟡</span><div><div class="reco-bloc-title">En fenêtre</div></div></div><div style="font-size:11px;color:var(--muted);padding:12px 0;font-style:italic">Aucune bouteille en fenêtre d'apogée pour cette demande.</div></div>`;
     }
 
-    // Bouton recommencer
     html += `<div style="text-align:center;margin-top:8px">
       <button class="btn btn-ghost" onclick="resetRecoFlow()" style="font-size:9px">↺ Nouvelle recherche</button>
     </div>`;
@@ -2043,7 +2022,6 @@ function recoCard(b, txt, bloc) {
   </div>`;
 }
 
-/* Contexte enrichi pour le prompt */
 function buildRecoContext() {
   const recent = [...cave.history]
     .sort((a,b) => (b.date||'').localeCompare(a.date||''))
