@@ -75,7 +75,7 @@
     /* ── TOOLBAR ── */
     .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
     .search-wrap { flex: 1; position: relative; }
-    .search-wrap input { width: 100%; background: #fff; border: 1px solid var(--border); padding: 9px 12px 9px 32px; font-size: 14px; outline: none; -webkit-appearance: none; border-radius: 0; }
+    .search-wrap input { width: 100%; background: #fff; border: 1px solid var(--border); padding: 9px 12px 9px 32px; font-size: 16px; outline: none; -webkit-appearance: none; border-radius: 0; }
     .search-wrap input:focus { border-color: var(--bordeaux); }
     .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--muted); pointer-events: none; }
 
@@ -287,14 +287,44 @@
     #toast.show { transform: translateX(-50%) translateY(0); }
     #toast.err  { border-left-color: #c0392b; }
 
+    /* ── BOTTOM NAV (mobile) ── */
+    #bottomnav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 95; background: var(--ink); border-top: 1px solid rgba(201,168,76,.25); padding: 6px 4px calc(6px + var(--safe-b)); grid-template-columns: repeat(5, 1fr); }
+    #bottomnav button { background: none; border: none; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .06em; text-transform: uppercase; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; cursor: pointer; }
+    #bottomnav button .bn-ico { font-size: 17px; line-height: 1; }
+    #bottomnav button.active { color: var(--gold); }
+
+    /* ── FAB (mobile) ── */
+    #fab { display: none; position: fixed; right: 16px; bottom: calc(72px + var(--safe-b)); z-index: 94; width: 54px; height: 54px; border-radius: 50%; background: var(--bordeaux); color: #fff; border: none; font-size: 26px; line-height: 1; cursor: pointer; box-shadow: 0 4px 14px rgba(26,20,16,.35); }
+    #fab:active { background: var(--bx2); }
+
+    /* ── CARTES BOUTEILLES (mobile) ── */
+    #cards { display: none; }
+    .wcard { background: #fff; border: 1px solid var(--border); border-left: 3px solid var(--border); padding: 12px 12px 10px; margin-bottom: 8px; }
+    .wcard.c-rouge { border-left-color: var(--red); }
+    .wcard.c-blanc { border-left-color: #c8a84c; }
+    .wcard.c-rose  { border-left-color: var(--rose); }
+    .wcard-top { display: flex; gap: 10px; align-items: baseline; }
+    .wcard-names { flex: 1; min-width: 0; }
+    .wcard-names .wine-name { font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wcard-names .wine-prod { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+    .wcard-vintage { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: var(--bordeaux); flex-shrink: 0; }
+    .wcard-app { font-size: 9px; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wcard-bottom { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .wcard-val { font-family: 'Cormorant Garamond', serif; font-size: 15px; margin-left: auto; }
+    .wcard .row-btn { width: 38px; height: 38px; font-size: 15px; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 600px) {
-      #topbar { grid-template-columns: 1fr auto; grid-template-rows: auto auto; padding: 6px 10px; gap: 0; }
-      .topbar-logo { grid-column: 1; grid-row: 1; font-size: 15px; }
+      #topbar { grid-template-columns: 1fr auto; padding: 8px 12px; gap: 0; }
+      .topbar-logo { grid-column: 1; grid-row: 1; font-size: 17px; }
       .topbar-info { grid-column: 2; grid-row: 1; }
-      .topbar-nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; border-top: 1px solid rgba(201,168,76,.1); padding-top: 2px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-      .topbar-nav::-webkit-scrollbar { display: none; }
-      .topbar-nav button { padding: 5px 8px; font-size: 8px; flex-shrink: 0; }
+      .topbar-nav { display: none; }
+      #bottomnav { display: grid; }
+      #fab { display: block; }
+      body { padding-bottom: calc(64px + var(--safe-b)); }
+      #toast { bottom: calc(76px + var(--safe-b)); }
+      .table-wrap { display: none; }
+      #cards { display: block; }
       #app-body { min-height: calc(100vh - 80px); }
       #sidebar { display: none; }
       .btn-filters-mobile { display: inline-block; }
@@ -310,6 +340,10 @@
       .table-wrap { font-size: 10px; }
       .wine-table th, .wine-table td { padding: 7px 6px; }
       .stats-sec { padding: 10px; }
+      .q-chip, .reco-chip { padding: 9px 14px; font-size: 13px; }
+      .chip { padding: 9px 12px; font-size: 12px; }
+      .btn { padding: 11px 16px; }
+      .row-btn { width: 38px; height: 38px; }
       div[style*="grid-template-columns:repeat(3"] { grid-template-columns: 1fr !important; }
       div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
     }
@@ -403,6 +437,7 @@
             <tbody id="tbody"></tbody>
           </table>
         </div>
+        <div id="cards"></div>
       </div>
     </div>
 
@@ -423,6 +458,7 @@
             <span class="reco-chip" onclick="setQ('Apéritif entre amis')">Apéritif</span>
             <span class="reco-chip" onclick="setQ('Grande occasion, budget libre')">Grande occasion</span>
             <span class="reco-chip" onclick="setQ('Poisson en sauce')">Poisson</span>
+            <span class="reco-chip" onclick="setQ('Surprends-moi : choisis librement, ose une bouteille à laquelle je ne penserais pas');startReco()">🎲 Surprends-moi</span>
           </div>
           <div id="reco-context-banner"></div>
           <div id="reco-results"></div>
@@ -551,6 +587,18 @@
     </div>
 
   </div>
+
+  <!-- ── NAVIGATION BASSE (mobile) ── -->
+  <nav id="bottomnav">
+    <button id="bn-cave" class="active" onclick="goTo('cave')"><span class="bn-ico">🍷</span>Cave</button>
+    <button id="bn-ai" onclick="goTo('ai')"><span class="bn-ico">✦</span>IA</button>
+    <button id="bn-historique" onclick="goTo('historique')"><span class="bn-ico">↩</span>Sorties</button>
+    <button id="bn-stats" onclick="goTo('stats')"><span class="bn-ico">▤</span>Stats</button>
+    <button id="bn-settings" onclick="goTo('settings')"><span class="bn-ico">⚙</span>Réglages</button>
+  </nav>
+
+  <!-- ── FAB AJOUT (mobile) ── -->
+  <button id="fab" onclick="openAdd()" title="Ajouter une bouteille">+</button>
 </div>
 
 <!-- ══ MODAL AJOUT / EDIT ══ -->
@@ -992,9 +1040,12 @@ function hasPrefs() {
 /* ── NAV ── */
 function goTo(p) {
   document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-  document.querySelectorAll('.topbar-nav button').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.topbar-nav button, #bottomnav button').forEach(x => x.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  document.getElementById('nb-'+p).classList.add('active');
+  const nb = document.getElementById('nb-'+p); if (nb) nb.classList.add('active');
+  const bn = document.getElementById('bn-'+p); if (bn) bn.classList.add('active');
+  const fab = document.getElementById('fab'); if (fab) fab.style.display = (p === 'cave') ? '' : 'none';
+  window.scrollTo(0, 0);
   if (p==='cave') render();
   if (p==='ai') renderRecoContext();
   if (p==='historique') renderHist();
@@ -1101,12 +1152,15 @@ function renderTable() {
     return (av||'').toString().toLowerCase().localeCompare((bv||'').toString().toLowerCase())*(d==='asc'?1:-1);
   });
   const tbody = document.getElementById('tbody');
+  const cards = document.getElementById('cards');
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty">
+    const emptyHTML = `<div class="empty">
       <div class="empty-title">${cave.bottles.length?'Aucun résultat':'Cave vide'}</div>
       <div class="empty-sub">${cave.bottles.length?'Modifie les filtres':'Commence par ajouter une bouteille'}</div>
       ${cave.bottles.length?'<button class="btn btn-ghost" onclick="resetFilters()">Réinitialiser</button>':'<button class="btn btn-prim" onclick="openAdd()">+ Ajouter</button>'}
-    </div></td></tr>`;
+    </div>`;
+    tbody.innerHTML = `<tr><td colspan="10">${emptyHTML}</td></tr>`;
+    if (cards) cards.innerHTML = emptyHTML;
     return;
   }
   const cd={rouge:'var(--red)',blanc:'#c8a84c',rose:'var(--rose)'};
@@ -1125,6 +1179,27 @@ function renderTable() {
       <td onclick="event.stopPropagation()"><button class="row-btn" title="Modifier" onclick="ui.currentId='${b.id}';editBottle()" style="margin-right:4px">✎</button><button class="row-btn" title="Sortir" onclick="quickConsume('${b.id}')">↩</button></td>
     </tr>`;
   }).join('');
+  if (cards) {
+    cards.innerHTML = list.map(b=>{
+      const m=mat(b);
+      return `<div class="wcard c-${b.color}" onclick="openDetail('${b.id}')">
+        <div class="wcard-top">
+          <div class="wcard-names">
+            <div class="wine-name">${esc(b.cuvee||b.appellation||b.producer)}</div>
+            <div class="wine-prod">${esc(b.producer)}${b.region?' · '+esc(b.region):''}</div>
+            ${b.appellation?`<div class="wcard-app">${esc(b.appellation)}</div>`:''}
+          </div>
+          <div class="wcard-vintage">${b.vintage||''}</div>
+        </div>
+        <div class="wcard-bottom">
+          <span class="mbadge ${m.c}">${m.l}</span>
+          <span class="qty-pill">×${b.quantity}</span>
+          <span class="wcard-val">${fEur(b.value)}</span>
+          <button class="row-btn" title="Sortir" onclick="event.stopPropagation();quickConsume('${b.id}')">↩</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
 
 /* ── MODALS ── */
@@ -1751,6 +1826,24 @@ function renderRecoContext() {
   banner.innerHTML = `<div class="reco-context">L'IA s'appuie sur : <strong>${parts.join(' · ')}</strong></div>`;
 }
 
+function poolsSummary(pools) {
+  const all = [...pools.urgentes, ...pools.fenetre];
+  if (!all.length) return 'Aucune bouteille disponible.';
+  const colors = {}, regions = {};
+  let minV = Infinity, maxV = 0, withVal = 0;
+  all.forEach(b => {
+    if (b.color) colors[COL[b.color]||b.color] = (colors[COL[b.color]||b.color]||0)+1;
+    if (b.region) regions[b.region] = (regions[b.region]||0)+1;
+    if (b.value) { withVal++; minV = Math.min(minV, b.value); maxV = Math.max(maxV, b.value); }
+  });
+  const colStr = Object.entries(colors).map(([k,v])=>`${k} (${v})`).join(', ') || '—';
+  const regStr = Object.entries(regions).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} (${v})`).join(', ') || '—';
+  const prixStr = withVal ? `de ${Math.round(minV)} € à ${Math.round(maxV)} €` : 'non renseignés';
+  return `Couleurs disponibles : ${colStr}
+Régions disponibles : ${regStr}
+Fourchette de prix : ${prixStr}`;
+}
+
 async function startReco() {
   const q = gv('reco-q');
   if (!q) { toast('Décris l\'occasion', true); return; }
@@ -1781,14 +1874,19 @@ ${ctx.recentConsumption.length ? JSON.stringify(ctx.recentConsumption, null, 2) 
 # SAISON ET MOMENT
 Date : ${ctx.today} — ${ctx.dayOfWeek} — ${ctx.season}
 
-# BOUTEILLES DISPONIBLES (aperçu)
-Urgentes (À boire maintenant) : ${pools.urgentes.length} bouteilles
+# COMPOSITION RÉELLE DE LA CAVE DISPONIBLE
+Urgentes (à boire maintenant) : ${pools.urgentes.length} bouteilles
 En fenêtre (accessibles, peuvent encore attendre) : ${pools.fenetre.length} bouteilles
+${poolsSummary(pools)}
 
-Ta mission : poser 1 à 3 questions COURTES et PERTINENTES pour mieux affiner la sélection.
-Chaque question doit avoir exactement 3 choix sous forme de chips cliquables.
-Les questions doivent porter sur des éléments que la demande ne précise PAS encore (occasion, couleur souhaitée, intensité, budget, plat principal si pas mentionné, etc.)
-Ne pose PAS de question si la réponse est déjà claire dans la demande.
+Ta mission : poser 0 à 3 questions COURTES et UTILES pour départager les bouteilles réellement disponibles.
+
+# RÈGLES STRICTES POUR LES QUESTIONS
+1. Une question n'est légitime QUE si plusieurs réponses possibles correspondent à des bouteilles réellement présentes dans la cave. Exemple : ne demande JAMAIS « rouge ou blanc ? » s'il n'y a que des rouges disponibles.
+2. Ne pose JAMAIS une question dont la réponse figure déjà dans la demande ou dans le profil. Si la demande dit « magret de canard », ne demande pas le plat. Si elle dit « budget libre », ne demande pas le budget.
+3. Chaque question doit réellement aider à TRANCHER entre les bouteilles disponibles (intensité, moment, convives, envie d'ouvrir une belle bouteille ou non…). Pas de questions décoratives.
+4. Si la demande est déjà suffisamment précise pour bien choisir, retourne "questions": [] — c'est une excellente réponse, pas un échec.
+5. Maximum 3 questions, idéalement 1 ou 2. Chaque question a exactement 3 choix courts.
 
 Réponds UNIQUEMENT avec ce JSON, sans markdown :
 {
@@ -1813,7 +1911,17 @@ Réponds UNIQUEMENT avec ce JSON, sans markdown :
     const txt = (data.content[0].text||'').trim().replace(/```json|```/g,'').trim();
     const parsed = JSON.parse(txt);
 
-    ui.recoState.questions = parsed.questions.map(q => ({...q, selected: null}));
+    const questions = (parsed.questions || []).slice(0, 3);
+
+    if (!questions.length) {
+      /* La demande est assez précise : recommandation directe */
+      ui.recoState.questions = [];
+      ui.recoState.step = 'reco';
+      await runReco();
+      return;
+    }
+
+    ui.recoState.questions = questions.map(q => ({...q, selected: null}));
     ui.recoState.step = 'questions';
 
     renderQuestions();
@@ -1842,11 +1950,22 @@ function renderQuestions() {
             onclick="selectAnswer(${qi}, '${c.value.replace(/'/g,"\\'")}', this)">
             ${esc(c.label)}
           </button>`).join('')}
+        <button class="q-chip ${q.selected === '__any__' ? 'selected' : ''}" style="opacity:.75"
+          onclick="selectAnswer(${qi}, '__any__', this)">Peu importe</button>
       </div>
     </div>`;
   });
-  html += '</div>';
+  html += `</div>
+  <div class="questions-footer" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="skipQuestions()" style="font-size:9px">Passer les questions — recommande directement →</button>
+    <button class="btn btn-prim" onclick="runReco()">Recommander →</button>
+  </div>`;
   document.getElementById('reco-results').innerHTML = html;
+}
+
+function skipQuestions() {
+  ui.recoState.questions.forEach(q => { if (!q.selected) q.selected = '__any__'; });
+  runReco();
 }
 
 function selectAnswer(qi, value, el) {
@@ -1886,7 +2005,7 @@ async function runReco() {
   try {
     const pools = ui.recoState.candidatesPools;
     const answers = ui.recoState.questions
-      .filter(q => q.selected)
+      .filter(q => q.selected && q.selected !== '__any__')
       .map(q => {
         const choice = q.choices.find(c => c.value === q.selected);
         return `${q.question} → ${choice ? choice.label : q.selected}`;
@@ -1900,7 +2019,7 @@ async function runReco() {
 "${ui.recoState.initialQuery}"
 
 # PRÉCISIONS APPORTÉES PAR LE CLIENT
-${answers.length ? answers.map(a => '• ' + a).join('\n') : 'Aucune précision supplémentaire.'}
+${answers.length ? answers.map(a => '• ' + a).join('\n') : 'Aucune précision supplémentaire (le client te fait confiance).'}
 
 # PROFIL DU CLIENT
 ${JSON.stringify(ctx.preferences, null, 2)}
@@ -2125,192 +2244,182 @@ function computePatterns() {
 /* ── HISTORIQUE ── */
 function renderHist() {
   const el = document.getElementById('hist-list');
-  if (!cave.history.length) { el.innerHTML=`<div class="empty"><div class="empty-title">Aucune sortie</div><div class="empty-sub">L'historique s'affichera ici</div></div>`; return; }
-  el.innerHTML = [...cave.history].sort((a,b)=>b.date.localeCompare(a.date)).map(h=>{
-    const s=h.snapshot||{};
-    const rateIcon = (typeof h.rating === 'number') ? ({'-1':'👎','0':'😐','1':'👍','2':'⭐'}[String(h.rating)] || '') : '';
+  if (!cave.history.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-title">Aucune sortie</div><div class="empty-sub">Les bouteilles sorties apparaîtront ici</div></div>`;
+    return;
+  }
+  const list = [...cave.history].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  el.innerHTML = list.map(h => {
+    const s = h.snapshot || {};
+    const rate = (typeof h.rating === 'number') ? `<span class="hist-rate" title="${RATE_LBL[String(h.rating)]||''}">${(RATE_LBL[String(h.rating)]||'').split(' ')[0]}</span>` : '';
     return `<div class="hist-item">
-      <div class="hist-date">${new Date(h.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}</div>
-      <div class="hist-wine"><div class="hist-name">${esc(s.cuvee||s.producer||'—')}</div><div class="hist-meta">${esc(s.producer||'')}${s.vintage?' · '+s.vintage:''}${s.appellation?' · '+esc(s.appellation):''}</div></div>
-      ${h.occasion?`<div class="hist-occ">"${esc(h.occasion)}"</div>`:''}
-      ${rateIcon?`<div class="hist-rate" title="${esc(RATE_LBL[String(h.rating)]||'')}">${rateIcon}</div>`:''}
-      <div class="hist-qty">×${h.quantity}</div>
+      <span class="hist-date">${h.date||'—'}</span>
+      <div class="hist-wine">
+        <div class="hist-name">${esc(s.cuvee||s.appellation||s.producer||'—')}</div>
+        <div class="hist-meta">${esc(s.producer||'')}${s.region?' · '+esc(s.region):''}${s.vintage?' · '+s.vintage:''}</div>
+        ${h.occasion?`<div class="hist-occ">« ${esc(h.occasion)} »</div>`:''}
+      </div>
+      ${rate}
+      <span class="hist-qty">×${h.quantity||1}</span>
     </div>`;
   }).join('');
 }
 
 /* ── STATS ── */
-function pie(data, colors, size) {
-  size = size || 140;
-  var total = data.reduce(function(s,d){return s+d.v;},0);
-  if (!total) return '<svg width="'+size+'" height="'+size+'"><text x="50%" y="50%" text-anchor="middle" fill="#aaa" font-size="10">Aucune donnée</text></svg>';
-  var cx=size/2, cy=size/2, r=size/2-2, angle=-Math.PI/2, paths='';
-  data.forEach(function(d,i){
-    if(!d.v) return;
-    var slice=2*Math.PI*d.v/total;
-    var x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
-    angle+=slice;
-    var x2=cx+r*Math.cos(angle), y2=cy+r*Math.sin(angle);
-    var large=slice>Math.PI?1:0;
-    paths+='<path d="M'+cx+','+cy+' L'+x1.toFixed(2)+','+y1.toFixed(2)+' A'+r+','+r+' 0 '+large+' 1 '+x2.toFixed(2)+','+y2.toFixed(2)+' Z" fill="'+colors[i%colors.length]+'" opacity="0.9"><title>'+esc(d.k)+' : '+d.v+' ('+Math.round(d.v/total*100)+'%)</title></path>';
-  });
-  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">'+paths+'</svg>';
-}
-
-function pieLegend(data, colors, total) {
-  return data.filter(function(d){return d.v>0;}).map(function(d,i){
-    return '<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;font-size:9px">'
-      +'<span style="width:8px;height:8px;border-radius:50%;background:'+colors[i%colors.length]+';flex-shrink:0"></span>'
-      +'<span style="color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.k)+'</span>'
-      +'<span style="color:var(--muted)">'+d.v+' ('+Math.round(d.v/total*100)+'%)</span>'
-      +'</div>';
-  }).join('');
-}
-
-function histo(data, color, labelFn) {
-  color = color || 'var(--bordeaux)';
-  labelFn = labelFn || function(k){return k;};
-  if (!data.length) return '<div style="font-size:10px;color:var(--muted)">Aucune donnée</div>';
-  var max = Math.max.apply(null, data.map(function(d){return d.v;}));
-  var html = '<div style="display:flex;align-items:flex-end;gap:3px;height:270px;padding-bottom:20px;position:relative">';
-  data.forEach(function(d){
-    var h = max ? Math.round((d.v/max)*240) : 0;
-    html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">'
-      +'<span style="font-size:7px;color:var(--muted)">'+(d.v||'')+'</span>'
-      +'<div style="width:100%;height:'+h+'px;background:'+color+';min-height:'+(d.v?2:0)+'px"></div>'
-      +'<span style="font-size:7px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;max-height:18px;overflow:hidden">'+labelFn(d.k)+'</span>'
-      +'</div>';
-  });
-  return html+'</div>';
-}
-
-function histoPeak(data, colorFn) {
-  if (!data.length) return '<div style="font-size:10px;color:var(--muted)">Aucune donnée</div>';
-  var max = Math.max.apply(null, data.map(function(d){return d.v;}));
-  var html = '<div style="display:flex;align-items:flex-end;gap:3px;height:270px;padding-bottom:20px">';
-  data.forEach(function(d){
-    var h = max ? Math.round((d.v/max)*240) : 0;
-    html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">'
-      +'<span style="font-size:7px;color:var(--muted)">'+(d.v||'')+'</span>'
-      +'<div style="width:100%;height:'+h+'px;background:'+colorFn(d.k)+';min-height:'+(d.v?2:0)+'px" title="'+d.k+': '+d.v+'"></div>'
-      +'<span style="font-size:7px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg)">'+d.k+'</span>'
-      +'</div>';
-  });
-  return html+'</div>';
+function barSection(title, entries, total, colorFn) {
+  if (!entries.length) return '';
+  return `<div class="stats-sec">
+    <div class="stats-sec-title">${title}</div>
+    ${entries.map(([k,v]) => `
+      <div class="bar-row">
+        <div class="bar-lbl"><span>${esc(String(k))}</span><span>${v}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${total?Math.round(v/total*100):0}%;background:${colorFn?colorFn(k):'var(--bordeaux)'}"></div></div>
+      </div>`).join('')}
+  </div>`;
 }
 
 function renderStats() {
-  var t=totBtl(), v=totVal(), el=document.getElementById('stats-content');
-  if (!t) { el.innerHTML='<div class="empty"><div class="empty-title">Cave vide</div></div>'; return; }
-  var y=new Date().getFullYear();
-  var bc={rouge:0,blanc:0,rose:0}, brBlanc={}, brRouge={}, bvint={}, bpeak={};
-  var bprix={'< 8€':0,'8-12€':0,'12-18€':0,'> 18€':0}, bweeks={};
-  cave.bottles.forEach(function(b){
-    var q=parseInt(b.quantity)||0;
-    bc[b.color]=(bc[b.color]||0)+q;
-    if(b.color==='blanc'&&b.region) brBlanc[b.region]=(brBlanc[b.region]||0)+q;
-    if(b.color==='rouge'&&b.region) brRouge[b.region]=(brRouge[b.region]||0)+q;
-    if(b.vintage) bvint[b.vintage]=(bvint[b.vintage]||0)+q;
-    if(b.peakEnd) bpeak[b.peakEnd]=(bpeak[b.peakEnd]||0)+q;
-    if(b.value){var pv=parseFloat(b.value);
-      if(pv<8.01) bprix['< 8€']+=q;
-      else if(pv<=12) bprix['8-12€']+=q;
-      else if(pv<=18) bprix['12-18€']+=q;
-      else bprix['> 18€']+=q;}
+  const el = document.getElementById('stats-content');
+  if (!cave.bottles.length && !cave.history.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-title">Pas encore de données</div><div class="empty-sub">Ajoute des bouteilles pour voir tes statistiques</div></div>`;
+    return;
+  }
+  const t = totBtl();
+  const cc = {rouge:0, blanc:0, rose:0}, rc = {}, vc = {}, mc = {'À boire !':0,'Peut attendre':0,'Attendre':0,'En retard':0,'—':0};
+  cave.bottles.forEach(b => {
+    const q = parseInt(b.quantity)||0;
+    if (cc[b.color]!==undefined) cc[b.color]+=q;
+    rc[b.region||'—']=(rc[b.region||'—']||0)+q;
+    if (b.vintage) vc[b.vintage]=(vc[b.vintage]||0)+q;
+    const m = mat(b).l; if (mc[m]!==undefined) mc[m]+=q;
   });
-  var getWK=function(ds){var d=new Date(ds);var dy=d.getDay();var df=dy===0?-6:1-dy;d.setDate(d.getDate()+df);d.setHours(0,0,0,0);return d.toISOString().slice(0,10);};
-  cave.history.forEach(function(h){if(!h.date)return;var wk=getWK(h.date);bweeks[wk]=(bweeks[wk]||0)+(h.quantity||0);});
-  var weeksData=[];
-  for(var i=9;i>=0;i--){var wd=new Date();var wdy=wd.getDay();var wdf=wdy===0?-6:1-wdy;wd.setDate(wd.getDate()+wdf-i*7);wd.setHours(0,0,0,0);var wk=wd.toISOString().slice(0,10);weeksData.push({k:wk,v:bweeks[wk]||0,label:'S'+(i===0?'(cur)':'-'+i)});}
-  var colColors=['var(--red)','#c8a84c','var(--rose)'];
-  var regColors=['#6b1f2a','#c9a84c','#4a7c59','#2c5f8a','#8b4513','#6b4c8a','#2e7d6b','#a0522d','#4682b4','#b8860b','#556b2f','#8b008b'];
-  var colData=[{k:'Rouge',v:bc.rouge},{k:'Blanc',v:bc.blanc},{k:'Rosé',v:bc.rose}];
-  var blancRegs=Object.entries(brBlanc).sort(function(a,b){return b[1]-a[1];}).slice(0,10).map(function(e){return{k:e[0],v:e[1]};});
-  var rougeRegs=Object.entries(brRouge).sort(function(a,b){return b[1]-a[1];}).slice(0,10).map(function(e){return{k:e[0],v:e[1]};});
-  var vintData=Object.keys(bvint).sort().map(function(k){return{k:k,v:bvint[k]};});
-  var peakData=Object.keys(bpeak).sort().map(function(k){return{k:k,v:bpeak[k]};});
-  var peakColor=function(k){var n=parseInt(k);if(n<y)return '#c0392b';if(n<=y+1)return '#2e7d32';if(n<=y+4)return 'var(--gold)';return 'var(--bordeaux)';};
-  var prixData=Object.entries(bprix).map(function(e){return{k:e[0],v:e[1]};});
-  var bwv2=cave.bottles.filter(function(b){return b.value&&parseInt(b.quantity)>0;});
-  var avgPrice='—';
-  if(bwv2.length){var sv=0,sq=0;bwv2.forEach(function(b){var q2=parseInt(b.quantity)||1;sv+=parseFloat(b.value)*q2;sq+=q2;});avgPrice=Math.round(sv/sq).toLocaleString('fr-FR')+' €';}
-  var ws2=weekStart();
-  var sortiesSem=cave.history.filter(function(h){return new Date(h.date)>=ws2;}).reduce(function(s,h){return s+(h.quantity||0);},0);
-  var card=function(ti,ht){return '<div class="stats-sec"><div class="stats-sec-title">'+ti+'</div>'+ht+'</div>';};
-  var pieCard=function(ti,data,colors){return '<div class="stats-sec" style="display:flex;flex-direction:column"><div class="stats-sec-title">'+ti+'</div><div style="display:flex;align-items:center;gap:12px;flex:1">'+pie(data,colors,120)+'<div style="flex:1;min-width:0">'+pieLegend(data,colors,data.reduce(function(s,d){return s+d.v;},0))+'</div></div></div>';};
-  var wlf=function(k){var w=weeksData.find(function(x){return x.k===k;});return w?w.label:k;};
-  el.innerHTML=''
-    +'<div class="stat-grid" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">'
-    +'<div class="stat-card"><div class="stat-lbl">Total</div><div class="stat-val">'+t+'</div><div class="stat-sub">bouteilles</div></div>'
-    +'<div class="stat-card"><div class="stat-lbl">Valeur totale</div><div class="stat-val">'+Math.round(v).toLocaleString('fr-FR')+'</div><div class="stat-sub">euros</div></div>'
-    +'<div class="stat-card"><div class="stat-lbl">Prix moyen / btl</div><div class="stat-val" style="font-size:18px">'+avgPrice+'</div><div class="stat-sub">pondéré</div></div>'
-    +'<div class="stat-card"><div class="stat-lbl">Sorties semaine</div><div class="stat-val">'+sortiesSem+'</div><div class="stat-sub">depuis lundi 00h01</div></div>'
-    +'<div class="stat-card"><div class="stat-lbl">Producteurs</div><div class="stat-val">'+new Set(cave.bottles.map(function(b){return b.producer;})).size+'</div><div class="stat-sub">distincts</div></div>'
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">'
-    +pieCard('Répartition par couleur',colData,colColors)
-    +pieCard('Blancs par région',blancRegs,regColors)
-    +pieCard('Rouges par région',rougeRegs,regColors)
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
-    +card('Bouteilles par millésime',histo(vintData,'var(--bordeaux)'))
-    +card('Fin d\'apogée',histoPeak(peakData,peakColor))
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-    +card('Sorties par semaine (10 dernières)',histo(weeksData,'#4a7c59',wlf))
-    +card('Bouteilles par tranche de prix',histo(prixData,'var(--gold)'))
-    +'</div>';
+  const colColor = { rouge:'var(--red)', blanc:'#c8a84c', rose:'var(--rose)' };
+  const matColor = { 'À boire !':'#2e7d32', 'Peut attendre':'#f57f17', 'Attendre':'#e65100', 'En retard':'#b71c1c', '—':'#aaa' };
+
+  const colors = Object.entries(cc).filter(([,v])=>v>0).map(([k,v])=>[COL[k],v]);
+  const colorsRaw = Object.entries(cc).filter(([,v])=>v>0);
+  const regions = Object.entries(rc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const vintages = Object.entries(vc).sort((a,b)=>Number(a[0])-Number(b[0]));
+  const matur = Object.entries(mc).filter(([,v])=>v>0);
+
+  /* Consommation par mois (12 derniers mois) */
+  const byMonth = {};
+  cave.history.forEach(h => { if (h.date) { const k = h.date.slice(0,7); byMonth[k]=(byMonth[k]||0)+(h.quantity||1); } });
+  const months = Object.entries(byMonth).sort((a,b)=>a[0].localeCompare(b[0])).slice(-12);
+  const maxM = months.length ? Math.max(...months.map(([,v])=>v)) : 0;
+
+  let html = '';
+  html += barSection('Répartition par couleur', colorsRaw.map(([k,v])=>[COL[k],v]), t, k => {
+    const inv = Object.entries(COL).find(([,lbl])=>lbl===k); return inv ? colColor[inv[0]] : 'var(--bordeaux)';
+  });
+  html += barSection('Maturité', matur, t, k => matColor[k]||'var(--bordeaux)');
+  html += barSection('Top régions', regions, t);
+  if (vintages.length) {
+    const maxV = Math.max(...vintages.map(([,v])=>v));
+    html += `<div class="stats-sec">
+      <div class="stats-sec-title">Millésimes</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:90px;overflow-x:auto;padding-bottom:4px">
+        ${vintages.map(([y,v])=>`
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;min-width:30px">
+            <span style="font-size:8px;color:var(--muted)">${v}</span>
+            <div style="width:22px;background:var(--bordeaux);height:${Math.max(4,Math.round(v/maxV*60))}px"></div>
+            <span style="font-size:8px;color:var(--muted)">${y}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+  if (months.length) {
+    html += `<div class="stats-sec">
+      <div class="stats-sec-title">Sorties par mois</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:90px;overflow-x:auto;padding-bottom:4px">
+        ${months.map(([mn,v])=>`
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;min-width:38px">
+            <span style="font-size:8px;color:var(--muted)">${v}</span>
+            <div style="width:26px;background:var(--gold);height:${Math.max(4,Math.round(v/maxM*60))}px"></div>
+            <span style="font-size:7px;color:var(--muted)">${mn.slice(2)}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+  const p = computePatterns();
+  if (p && p.ratedCount) {
+    html += `<div class="stats-sec">
+      <div class="stats-sec-title">Dégustations notées</div>
+      <div style="font-size:11px;line-height:1.8">
+        ${p.ratedCount} bouteille${p.ratedCount>1?'s':''} notée${p.ratedCount>1?'s':''} · note moyenne <strong>${p.avgRating}</strong> (sur -1 à 2)<br>
+        ${p.regionsLoved.length?`Régions appréciées : ${p.regionsLoved.join(', ')}<br>`:''}
+        ${p.regionsDisliked.length?`Régions décevantes : ${p.regionsDisliked.join(', ')}`:''}
+      </div>
+    </div>`;
+  }
+  el.innerHTML = html || `<div class="empty"><div class="empty-sub">Rien à afficher</div></div>`;
 }
 
-/* ── API KEY ── */
-function updateApiStatus() { /* Clé gérée côté serveur Netlify */ }
+/* ── SETTINGS HELPERS ── */
+function updateApiStatus() {
+  renderBatchCard();
+}
 
-/* ── EXPORT / DEMO ── */
+/* ── EXPORTS ── */
+function downloadFile(name, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function exportJSON() {
-  const blob=new Blob([JSON.stringify(cave,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`cave-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
-  toast('Sauvegarde JSON téléchargée');
+  downloadFile(
+    `cave-raphael-${new Date().toISOString().slice(0,10)}.json`,
+    JSON.stringify({ bottles: cave.bottles, history: cave.history, preferences: cave.preferences, exportedAt: new Date().toISOString() }, null, 2),
+    'application/json'
+  );
+  toast('Export JSON téléchargé');
 }
 
 function exportExcel() {
-  const header = ['Producteur','Cuvée','Région','Appellation','Couleur','Format','Millésime','Cépage(s)','Quantité','Valeur (€)','Alcool (%)','Apogée début','Apogée fin','Maturité','Emplacement','Date ajout'];
-  const rows = cave.bottles.map(b => [
-    b.producer||'', b.cuvee||'', b.region||'', b.appellation||'',
-    COL[b.color]||'', FMT[b.format]||'', b.vintage||'',
-    b.grapes||'', b.quantity||'', b.value||'', b.abv||'',
-    b.peakStart||'', b.peakEnd||'', mat(b).l,
-    LOC[b.location]||'', b.addedAt ? new Date(b.addedAt).toLocaleDateString('fr-FR') : ''
-  ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(';'));
-
-  const bom = '\uFEFF';
-  const csv = bom + header.join(';') + '\n' + rows.join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `cave-${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('Export Excel téléchargé');
+  const cols = ['producer','cuvee','appellation','region','color','vintage','grapes','format','location','quantity','value','abv','peakStart','peakEnd'];
+  const head = ['Producteur','Cuvée','Appellation','Région','Couleur','Millésime','Cépages','Format','Emplacement','Quantité','Valeur (€)','Alcool (%)','Apogée début','Apogée fin'];
+  const csvCell = v => {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  };
+  const rows = cave.bottles.map(b => cols.map(c => csvCell(b[c])).join(';'));
+  const csv = '\uFEFF' + head.join(';') + '\n' + rows.join('\n');
+  downloadFile(`cave-raphael-${new Date().toISOString().slice(0,10)}.csv`, csv, 'text/csv;charset=utf-8');
+  toast('Export Excel (CSV) téléchargé');
 }
 
+/* ── DÉMO ── */
 function loadDemo() {
-  if(cave.bottles.length&&!confirm('Ajouter les bouteilles de démo ?')) return;
-  [{producer:'Domaine Leflaive',cuvee:'Les Pucelles',region:'Bourgogne',appellation:'Puligny-Montrachet 1er Cru',color:'blanc',format:'bouteille',location:'grande',vintage:2019,grapes:'Chardonnay',quantity:3,value:360,peakStart:2024,peakEnd:2032},
-   {producer:'Domaine Rousseau',cuvee:'Gevrey-Chambertin 1er Cru',region:'Bourgogne',appellation:'Gevrey-Chambertin',color:'rouge',format:'bouteille',location:'grande',vintage:2018,grapes:'Pinot Noir',quantity:6,value:420,peakStart:2026,peakEnd:2038},
-   {producer:'Château Rayas',cuvee:'Châteauneuf-du-Pape',region:'Rhône',appellation:'Châteauneuf-du-Pape',color:'rouge',format:'magnum',location:'grande',vintage:2015,grapes:'Grenache',quantity:1,value:890,peakStart:2020,peakEnd:2028},
-   {producer:'Henri Bourgeois',cuvee:'La Bourgeoise',region:'Loire',appellation:'Sancerre',color:'blanc',format:'bouteille',location:'petite',vintage:2022,grapes:'Sauvignon Blanc',quantity:12,value:38,peakStart:2023,peakEnd:2027},
-   {producer:'Château Pichon Baron',cuvee:'Pichon Longueville Baron',region:'Bordeaux',appellation:'Pauillac',color:'rouge',format:'bouteille',location:'grande',vintage:2016,grapes:'Cabernet Sauvignon, Merlot',quantity:4,value:195,peakStart:2025,peakEnd:2040},
-   {producer:'Domaine Tempier',cuvee:'La Migoua',region:'Provence',appellation:'Bandol',color:'rouge',format:'bouteille',location:'petite',vintage:2020,grapes:'Mourvèdre, Grenache',quantity:6,value:55,peakStart:2025,peakEnd:2035},
-   {producer:'Domaine Ott',cuvee:'Clos Mireille',region:'Provence',appellation:'Côtes de Provence',color:'rose',format:'bouteille',location:'petite',vintage:2023,grapes:'Grenache, Cinsault',quantity:8,value:32,peakStart:2024,peakEnd:2026},
-   {producer:'Krug',cuvee:'Grande Cuvée 170ème',region:'Champagne',appellation:'Champagne',color:'blanc',format:'bouteille',location:'grande',vintage:null,grapes:'Pinot Noir, Chardonnay, Meunier',quantity:2,value:220,peakStart:2023,peakEnd:2030}
-  ].forEach(b=>cave.bottles.push({id:uid(),addedAt:new Date().toISOString(),...b}));
-  schedulePush(); render(); goTo('cave'); toast('8 bouteilles de démo ajoutées');
+  if (cave.bottles.length && !confirm('Ajouter 8 bouteilles de démo à ta cave actuelle ?')) return;
+  const y = new Date().getFullYear();
+  const demo = [
+    { producer:'Domaine de la Janasse', cuvee:'Cuvée Chaupin', appellation:'Châteauneuf-du-Pape', region:'Rhône Sud', color:'rouge', vintage:2016, grapes:'Grenache', format:'bouteille', location:'grande', quantity:2, value:55, abv:15, peakStart:2022, peakEnd:y+1 },
+    { producer:'Domaine Vacheron', cuvee:'', appellation:'Sancerre', region:'Loire', color:'blanc', vintage:2022, grapes:'Sauvignon Blanc', format:'bouteille', location:'petite', quantity:3, value:28, abv:13, peakStart:2023, peakEnd:y+2 },
+    { producer:'Château Sociando-Mallet', cuvee:'', appellation:'Haut-Médoc', region:'Bordeaux', color:'rouge', vintage:2010, grapes:'Cabernet Sauvignon, Merlot', format:'bouteille', location:'grande', quantity:1, value:48, abv:13.5, peakStart:2018, peakEnd:y },
+    { producer:'Domaine Tempier', cuvee:'', appellation:'Bandol Rosé', region:'Provence', color:'rose', vintage:2023, grapes:'Mourvèdre, Grenache, Cinsault', format:'bouteille', location:'petite', quantity:4, value:32, abv:13.5, peakStart:2024, peakEnd:y+1 },
+    { producer:'Domaine Méo-Camuzet', cuvee:'', appellation:'Bourgogne Hautes-Côtes-de-Nuits', region:'Bourgogne', color:'rouge', vintage:2019, grapes:'Pinot Noir', format:'bouteille', location:'grande', quantity:2, value:42, abv:13, peakStart:2023, peakEnd:y+4 },
+    { producer:'Trimbach', cuvee:'Cuvée Frédéric Émile', appellation:'Riesling', region:'Alsace', color:'blanc', vintage:2015, grapes:'Riesling', format:'bouteille', location:'petite', quantity:1, value:60, abv:13, peakStart:2021, peakEnd:y+6 },
+    { producer:'Domaine Jamet', cuvee:'', appellation:'Côte-Rôtie', region:'Rhône Nord', color:'rouge', vintage:2018, grapes:'Syrah', format:'magnum', location:'grande', quantity:1, value:160, abv:13, peakStart:2026, peakEnd:y+10 },
+    { producer:'Château Climens', cuvee:'', appellation:'Barsac', region:'Bordeaux', color:'blanc', vintage:2011, grapes:'Sémillon', format:'bouteille', location:'autre', quantity:2, value:75, abv:14, peakStart:2019, peakEnd:y+9 }
+  ];
+  demo.forEach(d => cave.bottles.push({ id: uid(), ...d, addedAt: new Date().toISOString() }));
+  schedulePush(); render(); toast('8 bouteilles de démo ajoutées 🍷');
 }
 
 /* ── INIT ── */
-loadAuth(); loadCache();
-if (auth.token && auth.gistId) { showApp(); pullGist(true); }
-else document.getElementById('login-screen').classList.remove('hidden');
+loadAuth();
+loadCache();
+if (auth.token && auth.gistId) {
+  showApp();
+  pullGist(true);
+}
+
 </script>
 </body>
 </html>
